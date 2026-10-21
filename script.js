@@ -582,15 +582,15 @@
 
   const PLANETS = [
     {
-      key: 'data', r: 44,
+      key: 'data', r: 60,
       lit: '#efe9ff', mid: '#9a86ff', dark: '#4a30b8', edge: '#1a0f45', glow: '150, 130, 255'
     },
     {
-      key: 'self', r: 56, bands: true,
+      key: 'self', r: 60, bands: true,
       lit: '#6a6a72', mid: '#1b1b20', dark: '#08080a', edge: '#000000', glow: '120, 150, 210'
     },
     {
-      key: 'finance', r: 42, ring: true,
+      key: 'finance', r: 60, ring: true,
       lit: '#fff6d8', mid: '#f0c979', dark: '#a9711f', edge: '#3d2606', glow: '240, 205, 138'
     }
   ];
@@ -633,7 +633,7 @@
 
       const RATIO = 0.96;
       const tiltK = Math.abs(Math.cos(TILT)) + RATIO * Math.abs(Math.sin(TILT));
-      this.A = Math.min((h * 0.42) / RATIO, (w * 0.5 - 58) / tiltK);
+      this.A = Math.min((h * 0.5 - 88) / RATIO, (w * 0.5 - 78) / tiltK);
       this.B = this.A * RATIO;
 
       this.seed();
@@ -1179,9 +1179,17 @@
       const ctx = this.ctx;
       if (!ctx) return;
       ctx.clearRect(0, 0, this.w, this.h);
-      if (this.mode === 'notes') this.drawNotes(ctx);
-      else if (this.mode === 'candles') this.drawCandles(ctx);
-      else this.drawDNA(ctx);
+      if (this.mode === 'notes') {
+        this.drawNotes(ctx);
+      } else if (this.mode === 'candles') {
+        ctx.globalAlpha = 0.5;
+        this.drawCandles(ctx);
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.globalAlpha = 0.52;
+        this.drawDNA(ctx);
+        ctx.globalAlpha = 1;
+      }
       this.drawVignette(ctx);
     }
 
