@@ -81,6 +81,22 @@
         sp: 0.2 + Math.random() * 0.9,
         d: 1 + Math.floor(Math.random() * 3)
       }));
+      /* 散景光斑：近处的更大更虚，制造景深 */
+      const hues = ['201, 168, 106', '124, 112, 208', '86, 156, 168', '206, 150, 120'];
+      this.bokeh = Array.from({ length: 7 }, (_, i) => {
+        const near = i < 2;
+        return {
+          x: Math.random(),
+          y: Math.random(),
+          r: (near ? 0.14 : 0.06) + Math.random() * 0.09,
+          a: near ? 0.05 : 0.075,
+          hue: hues[i % hues.length],
+          sp: 0.015 + Math.random() * 0.03,
+          ph: Math.random() * TAU,
+          depth: near ? 26 : 7,
+          near
+        };
+      });
       if (reduceMotion) this.render(2);
     }
 
@@ -115,6 +131,8 @@
       });
 
       /* 星点（按视差分层） */
+      this.drawBokeh(t, false);
+
       this.stars.forEach((s) => {
         const a = s.a * (0.5 + 0.5 * Math.sin(t * s.sp + s.tw));
         const ox = this.px * s.d * 5;
@@ -122,6 +140,28 @@
         ctx.beginPath();
         ctx.arc(s.x + ox, s.y + oy, s.r, 0, TAU);
         ctx.fillStyle = `rgba(238, 231, 214, ${Math.max(a, 0.04)})`;
+        ctx.fill();
+      });
+
+      /* 近景散景：压在最前面，模拟失焦前景 */
+      this.drawBokeh(t, true);
+    }
+
+    drawBokeh(t, near) {
+      const { ctx, w, h } = this;
+      const list = this.bokeh || [];
+      list.forEach((b) => {
+        if (b.near !== near) return;
+        const R = Math.min(w, h) * b.r;
+        const x = b.x * w + Math.sin(t * b.sp + b.ph) * 34 + this.px * b.depth;
+        const y = b.y * h + Math.cos(t * b.sp * 1.2 + b.ph) * 26 + this.py * b.depth;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, R);
+        g.addColorStop(0, `rgba(${b.hue}, ${b.a})`);
+        g.addColorStop(0.55, `rgba(${b.hue}, ${b.a * 0.45})`);
+        g.addColorStop(1, `rgba(${b.hue}, 0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, R, 0, TAU);
         ctx.fill();
       });
     }
@@ -254,13 +294,13 @@
           else ctx.lineTo(pts[0], pts[1]);
         }
         if (front) {
-          ctx.strokeStyle = 'rgba(240, 219, 181, 0.78)';
-          ctx.lineWidth = 1.5;
-          ctx.shadowColor = 'rgba(214, 178, 112, 0.55)';
-          ctx.shadowBlur = 9;
+          ctx.strokeStyle = 'rgba(242, 222, 188, 0.62)';
+          ctx.lineWidth = 1.15;
+          ctx.shadowColor = 'rgba(214, 178, 112, 0.5)';
+          ctx.shadowBlur = 16;
         } else {
-          ctx.strokeStyle = 'rgba(196, 163, 104, 0.20)';
-          ctx.lineWidth = 1.1;
+          ctx.strokeStyle = 'rgba(196, 163, 104, 0.14)';
+          ctx.lineWidth = 0.9;
           ctx.shadowBlur = 0;
         }
         ctx.stroke();
@@ -300,6 +340,16 @@
       };
 
       const R = 205;
+
+      /* 盘面外的一圈柔光，避免表盘"贴"在背景上 */
+      const glow = ctx.createRadialGradient(cx, cy, R * zoom * 0.55, cx, cy, R * zoom * 1.7);
+      glow.addColorStop(0, 'rgba(214, 178, 112, 0.10)');
+      glow.addColorStop(0.55, 'rgba(214, 178, 112, 0.045)');
+      glow.addColorStop(1, 'rgba(214, 178, 112, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * zoom * 1.7, 0, TAU);
+      ctx.fill();
 
       /* 盘面 */
       ctx.beginPath();
@@ -358,8 +408,8 @@
         ctx.beginPath();
         ctx.moveTo(a[0], a[1]);
         ctx.lineTo(b[0], b[1]);
-        ctx.strokeStyle = major ? 'rgba(240, 222, 186, 0.72)' : 'rgba(240, 222, 186, 0.28)';
-        ctx.lineWidth = major ? 1.6 : 0.9;
+        ctx.strokeStyle = major ? 'rgba(242, 226, 194, 0.55)' : 'rgba(242, 226, 194, 0.18)';
+        ctx.lineWidth = major ? 1.3 : 0.7;
         ctx.stroke();
       }
 
