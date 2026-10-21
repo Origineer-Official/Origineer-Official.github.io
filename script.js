@@ -1,9 +1,10 @@
 /* =========================================================
    Origineer · 个人主页
    1. 工具
-   2. 浑天仪时钟（Canvas 3D）
-   3. 星图（Canvas）
-   4. 行星详情弹窗 + 背景动画
+   2. 背景星场
+   3. 时钟（首屏与星系中心共用）
+   4. 星图：等边三角行星 + 星尘环带
+   5. 行星详情弹窗
    ========================================================= */
 (() => {
   'use strict';
@@ -50,7 +51,7 @@
       this.ty = 0;
       this.frame = 0;
       this.neb = [
-        { x: 0.22, y: 0.24, r: 0.62, c: '74, 58, 150', a: 0.30, sp: 0.014, ph: 0 },
+        { x: 0.22, y: 0.24, r: 0.62, c: '74, 58, 150', a: 0.3, sp: 0.014, ph: 0 },
         { x: 0.82, y: 0.58, r: 0.5, c: '16, 74, 96', a: 0.24, sp: 0.011, ph: 2.1 },
         { x: 0.55, y: 0.9, r: 0.46, c: '104, 66, 44', a: 0.2, sp: 0.017, ph: 4.2 }
       ];
@@ -81,7 +82,6 @@
         sp: 0.2 + Math.random() * 0.9,
         d: 1 + Math.floor(Math.random() * 3)
       }));
-      /* 散景光斑：近处的更大更虚，制造景深 */
       const hues = ['201, 168, 106', '124, 112, 208', '86, 156, 168', '206, 150, 120'];
       this.bokeh = Array.from({ length: 7 }, (_, i) => {
         const near = i < 2;
@@ -103,7 +103,6 @@
     start() {
       if (reduceMotion) return;
       const loop = (now) => {
-        // 背景 30fps 足够，省电
         if (this.frame++ % 2 === 0) this.render(now / 1000);
         requestAnimationFrame(loop);
       };
@@ -118,7 +117,6 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      /* 星云 */
       this.neb.forEach((n) => {
         const x = w * n.x + Math.sin(t * n.sp + n.ph) * w * 0.015 + this.px * 12;
         const y = h * n.y + Math.cos(t * n.sp * 1.2 + n.ph) * h * 0.015 + this.py * 12;
@@ -130,27 +128,22 @@
         ctx.fillRect(0, 0, w, h);
       });
 
-      /* 星点（按视差分层） */
       this.drawBokeh(t, false);
 
       this.stars.forEach((s) => {
         const a = s.a * (0.5 + 0.5 * Math.sin(t * s.sp + s.tw));
-        const ox = this.px * s.d * 5;
-        const oy = this.py * s.d * 5;
         ctx.beginPath();
-        ctx.arc(s.x + ox, s.y + oy, s.r, 0, TAU);
+        ctx.arc(s.x + this.px * s.d * 5, s.y + this.py * s.d * 5, s.r, 0, TAU);
         ctx.fillStyle = `rgba(238, 231, 214, ${Math.max(a, 0.04)})`;
         ctx.fill();
       });
 
-      /* 近景散景：压在最前面，模拟失焦前景 */
       this.drawBokeh(t, true);
     }
 
     drawBokeh(t, near) {
       const { ctx, w, h } = this;
-      const list = this.bokeh || [];
-      list.forEach((b) => {
+      (this.bokeh || []).forEach((b) => {
         if (b.near !== near) return;
         const R = Math.min(w, h) * b.r;
         const x = b.x * w + Math.sin(t * b.sp + b.ph) * 34 + this.px * b.depth;
@@ -167,12 +160,265 @@
     }
   }
 
-  /* ===== 3. 浑天仪时钟 ===== */
-  const ORRERY_CENTER = 0;
+  /* ===== 3. 时钟（公用绘制） ===== */
   const RINGS = [
     { r: 292, tx: 1.29, tz: 0.0, speed: 0.22, beads: [0.4, 3.1] },
     { r: 244, tx: 1.06, tz: 0.5, speed: -0.17, beads: [1.6, 4.6] }
   ];
+
+  const DUST = Array.from({ length: 24 }, () => ({
+    a: Math.random() * TAU,
+    r: 0.28 + Math.random() * 0.72,
+    s: 0.15 + Math.random() * 0.5,
+    o: Math.random() * TAU
+  }));
+
+  function ringPoint(r, th, tiltX, tiltZ) {
+    const x0 = Math.cos(th) * r;
+    const y0 = Math.sin(th) * r;
+    const c1 = Math.cos(tiltX), s1 = Math.sin(tiltX);
+    const y1 = y0 * c1;
+    const z1 = y0 * s1;
+    const c2 = Math.cos(tiltZ), s2 = Math.sin(tiltZ);
+    return [x0 * c2 - y1 * s2, x0 * s2 + y1 * c2, z1];
+  }
+
+  function projectPoint(p, cx, cy, zoom, ax, ay) {
+    const cyaw = Math.cos(ay), syaw = Math.sin(ay);
+    const X = p[0] * cyaw + p[2] * syaw;
+    const Z = -p[0] * syaw + p[2] * cyaw;
+    const cp = Math.cos(ax), sp = Math.sin(ax);
+    const Y = p[1] * cp - Z * sp;
+    const Z2 = p[1] * sp + Z * cp;
+    const F = 2100;
+    const k = F / (F + Z2);
+    return [cx + X * zoom * k, cy + Y * zoom * k, k];
+  }
+
+  /* 在给定画布区域内画一座浑天仪时钟 */
+  function drawOrrery(ctx, w, h, t, opts) {
+    const o = opts || {};
+    const px = o.px || 0;
+    const py = o.py || 0;
+    const drawBg = o.bg !== false;
+
+    const cx = w / 2 + px * 16;
+    const cy = h / 2 + Math.sin(t * 0.45) * 5 + py * 16;
+    const zoom = Math.min(w, h) / 780;
+    const ax = 0.36 + Math.sin(t * 0.16) * 0.04 + py * 0.05;
+    const ay = t * 0.11 + px * 0.12;
+
+    if (drawBg) {
+      const bg = ctx.createRadialGradient(cx, cy, 4, cx, cy, Math.min(w, h) * 0.62);
+      bg.addColorStop(0, 'rgba(214, 178, 112, 0.16)');
+      bg.addColorStop(0.42, 'rgba(140, 108, 60, 0.06)');
+      bg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    const P = (p) => projectPoint(p, cx, cy, zoom, ax, ay);
+
+    /* 背面的环 */
+    strokeRing(ctx, P, t, false);
+
+    /* 表盘 */
+    drawDial(ctx, cx, cy, zoom, ax, t);
+
+    /* 正面的环 */
+    strokeRing(ctx, P, t, true);
+
+    /* 光尘 */
+    DUST.forEach((d) => {
+      const ang = d.a + t * d.s * 0.12;
+      const rad = d.r * Math.min(w, h) * 0.48;
+      const x = cx + Math.cos(ang) * rad;
+      const y = cy + Math.sin(ang) * rad * 0.62;
+      const tw = 0.35 + 0.35 * Math.sin(t * 0.9 + d.o);
+      ctx.beginPath();
+      ctx.arc(x, y, 1.1 + d.r * 1.2, 0, TAU);
+      ctx.fillStyle = `rgba(236, 219, 186, ${0.1 + tw * 0.18})`;
+      ctx.fill();
+    });
+
+    function strokeRing(c, P2, time, front) {
+      RINGS.forEach((ring, idx) => {
+        const spin = time * ring.speed + idx;
+        c.beginPath();
+        let pen = false;
+        const N = 180;
+        for (let i = 0; i <= N; i++) {
+          const th = (i / N) * TAU;
+          const p = ringPoint(ring.r, th, ring.tx, ring.tz + spin);
+          const pts = P2(p);
+          const isFront = p[2] > 0;
+          if (isFront !== front) { pen = false; continue; }
+          if (!pen) { c.moveTo(pts[0], pts[1]); pen = true; }
+          else c.lineTo(pts[0], pts[1]);
+        }
+        if (front) {
+          c.strokeStyle = 'rgba(242, 222, 188, 0.62)';
+          c.lineWidth = 1.15;
+          c.shadowColor = 'rgba(214, 178, 112, 0.5)';
+          c.shadowBlur = 16;
+        } else {
+          c.strokeStyle = 'rgba(196, 163, 104, 0.14)';
+          c.lineWidth = 0.9;
+          c.shadowBlur = 0;
+        }
+        c.stroke();
+        c.shadowBlur = 0;
+
+        ring.beads.forEach((offset) => {
+          const th = time * ring.speed * 1.4 + offset;
+          const p = ringPoint(ring.r, th, ring.tx, ring.tz + spin);
+          if ((p[2] > 0) !== front) return;
+          const pts = P2(p);
+          const r = 4.6 * pts[2] * (front ? 1 : 0.75);
+          const g = c.createRadialGradient(pts[0] - r * 0.3, pts[1] - r * 0.3, 0.4, pts[0], pts[1], r);
+          g.addColorStop(0, 'rgba(255, 246, 220, 0.95)');
+          g.addColorStop(0.55, 'rgba(230, 199, 141, 0.9)');
+          g.addColorStop(1, 'rgba(150, 114, 60, 0.15)');
+          c.beginPath();
+          c.arc(pts[0], pts[1], r, 0, TAU);
+          c.fillStyle = g;
+          c.shadowColor = 'rgba(240, 200, 130, 0.8)';
+          c.shadowBlur = 12;
+          c.fill();
+          c.shadowBlur = 0;
+        });
+      });
+    }
+
+    function drawDial(c, cx2, cy2, zoom2, ax2, time) {
+      const tiltX = 0.3 + Math.sin(time * 0.4) * 0.015;
+      const P2 = (p) => projectPoint(p, cx2, cy2, zoom2, ax2, 0);
+
+      const dp = (r, th) => {
+        const x0 = Math.cos(th) * r;
+        const y0 = Math.sin(th) * r;
+        const cc = Math.cos(tiltX), ss = Math.sin(tiltX);
+        return [x0, y0 * cc, y0 * ss];
+      };
+
+      const R = 205;
+
+      /* 柔光 */
+      const glow = c.createRadialGradient(cx2, cy2, R * zoom2 * 0.55, cx2, cy2, R * zoom2 * 1.7);
+      glow.addColorStop(0, 'rgba(214, 178, 112, 0.1)');
+      glow.addColorStop(0.55, 'rgba(214, 178, 112, 0.045)');
+      glow.addColorStop(1, 'rgba(214, 178, 112, 0)');
+      c.fillStyle = glow;
+      c.beginPath();
+      c.arc(cx2, cy2, R * zoom2 * 1.7, 0, TAU);
+      c.fill();
+
+      /* 盘面 */
+      c.beginPath();
+      for (let i = 0; i <= 120; i++) {
+        const pts = P2(dp(R, (i / 120) * TAU));
+        i === 0 ? c.moveTo(pts[0], pts[1]) : c.lineTo(pts[0], pts[1]);
+      }
+      c.closePath();
+      const fill = c.createRadialGradient(cx2 - R * zoom2 * 0.35, cy2 - R * zoom2 * 0.4, R * zoom2 * 0.1,
+        cx2, cy2, R * zoom2 * 1.08);
+      fill.addColorStop(0, 'rgba(38, 52, 84, 0.97)');
+      fill.addColorStop(0.5, 'rgba(17, 24, 40, 0.98)');
+      fill.addColorStop(1, 'rgba(6, 8, 14, 0.99)');
+      c.fillStyle = fill;
+      c.fill();
+
+      /* 玻璃高光 */
+      const sheen = c.createLinearGradient(cx2 - R * zoom2, cy2 - R * zoom2, cx2 + R * zoom2 * 0.6, cy2 + R * zoom2);
+      sheen.addColorStop(0, 'rgba(255, 245, 220, 0.07)');
+      sheen.addColorStop(0.4, 'rgba(255, 245, 220, 0.015)');
+      sheen.addColorStop(1, 'rgba(255, 245, 220, 0)');
+      c.fillStyle = sheen;
+      c.fill();
+
+      /* 内圈 */
+      c.beginPath();
+      for (let i = 0; i <= 120; i++) {
+        const pts = P2(dp(R * 0.62, (i / 120) * TAU));
+        i === 0 ? c.moveTo(pts[0], pts[1]) : c.lineTo(pts[0], pts[1]);
+      }
+      c.closePath();
+      c.strokeStyle = 'rgba(232, 208, 160, 0.12)';
+      c.lineWidth = 1;
+      c.stroke();
+
+      /* 外沿 */
+      c.strokeStyle = 'rgba(232, 208, 160, 0.75)';
+      c.lineWidth = 1.6;
+      c.stroke();
+
+      /* 刻度 */
+      for (let i = 0; i < 60; i++) {
+        const th = (i / 60) * TAU - Math.PI / 2;
+        const major = i % 5 === 0;
+        const a = P2(dp(R * (major ? 0.8 : 0.86), th));
+        const b = P2(dp(R * 0.9, th));
+        c.beginPath();
+        c.moveTo(a[0], a[1]);
+        c.lineTo(b[0], b[1]);
+        c.strokeStyle = major ? 'rgba(242, 226, 194, 0.55)' : 'rgba(242, 226, 194, 0.18)';
+        c.lineWidth = major ? 1.3 : 0.7;
+        c.stroke();
+      }
+
+      /* 罗马数字 */
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillStyle = 'rgba(238, 226, 202, 0.62)';
+      const marks = [['XII', 0], ['III', 0.25], ['VI', 0.5], ['IX', 0.75]];
+      marks.forEach(([label, frac]) => {
+        const th = frac * TAU - Math.PI / 2;
+        const pts = P2(dp(R * 0.66, th));
+        c.font = `${Math.round(21 * pts[2] * zoom2 * 1.6)}px Georgia, "Times New Roman", serif`;
+        c.fillText(label, pts[0], pts[1]);
+      });
+
+      /* 指针 */
+      const now = new Date();
+      const secs = now.getSeconds() + now.getMilliseconds() / 1000;
+      const mins = now.getMinutes() + secs / 60;
+      const hours = (now.getHours() % 12) + mins / 60;
+
+      const center = P2([0, 0, 0]);
+      const hand = (frac, len, width, color, alpha) => {
+        const th = frac * TAU - Math.PI / 2;
+        const tip = P2(dp(len, th));
+        const tail = P2(dp(-len * 0.12, th));
+        c.beginPath();
+        c.moveTo(tail[0], tail[1]);
+        c.lineTo(tip[0], tip[1]);
+        c.strokeStyle = color;
+        c.globalAlpha = alpha;
+        c.lineWidth = width * zoom2 * 1.6;
+        c.lineCap = 'round';
+        c.shadowColor = 'rgba(255, 232, 190, 0.45)';
+        c.shadowBlur = 8;
+        c.stroke();
+        c.shadowBlur = 0;
+        c.globalAlpha = 1;
+      };
+
+      hand(hours / 12, R * 0.5, 2.1, '#f5e6c6', 0.95);
+      hand(mins / 60, R * 0.74, 1.5, '#f7ecd4', 0.95);
+      hand(secs / 60, R * 0.82, 0.7, '#e6a887', 0.9);
+
+      /* 中心轴 */
+      const capR = 5.2 * zoom2 * 1.6;
+      const cap = c.createRadialGradient(center[0] - capR * 0.4, center[1] - capR * 0.4, 0.5, center[0], center[1], capR);
+      cap.addColorStop(0, '#fff6dc');
+      cap.addColorStop(0.6, '#c9a86a');
+      cap.addColorStop(1, '#4a3517');
+      c.beginPath();
+      c.arc(center[0], center[1], capR, 0, TAU);
+      c.fillStyle = cap;
+      c.fill();
+    }
+  }
 
   class Orrery {
     constructor(canvas) {
@@ -180,16 +426,11 @@
       this.ctx = canvas.getContext('2d');
       this.w = 0;
       this.h = 0;
-      this.raf = 0;
       this.px = 0;
       this.py = 0;
       this.tx = 0;
       this.ty = 0;
       this.resize();
-      this.bindPointer();
-    }
-
-    bindPointer() {
       window.addEventListener('pointermove', (e) => {
         this.tx = (e.clientX / window.innerWidth - 0.5) * 2;
         this.ty = (e.clientY / window.innerHeight - 0.5) * 2;
@@ -208,299 +449,35 @@
       if (reduceMotion) return;
       const loop = (now) => {
         this.render(now / 1000);
-        this.raf = requestAnimationFrame(loop);
+        requestAnimationFrame(loop);
       };
-      this.raf = requestAnimationFrame(loop);
-    }
-
-    /* 圆环上的点 → 世界坐标 */
-    ringPoint(r, th, tiltX, tiltZ) {
-      const x0 = Math.cos(th) * r;
-      const y0 = Math.sin(th) * r;
-      const z0 = 0;
-      const c1 = Math.cos(tiltX), s1 = Math.sin(tiltX);
-      const y1 = y0 * c1 - z0 * s1;
-      const z1 = y0 * s1 + z0 * c1;
-      const c2 = Math.cos(tiltZ), s2 = Math.sin(tiltZ);
-      const x2 = x0 * c2 - y1 * s2;
-      const y2 = x0 * s2 + y1 * c2;
-      return [x2, y2, z1];
-    }
-
-    /* 整体旋转 + 透视 */
-    project(p, cx, cy, zoom, ax, ay) {
-      const cyaw = Math.cos(ay), syaw = Math.sin(ay);
-      const X = p[0] * cyaw + p[2] * syaw;
-      const Z = -p[0] * syaw + p[2] * cyaw;
-      const cp = Math.cos(ax), sp = Math.sin(ax);
-      const Y = p[1] * cp - Z * sp;
-      const Z2 = p[1] * sp + Z * cp;
-      const F = 2100;
-      const k = F / (F + Z2);
-      return [cx + X * zoom * k, cy + Y * zoom * k, k];
+      requestAnimationFrame(loop);
     }
 
     render(t) {
       const { ctx, w, h } = this;
       if (!w || !h) return;
-
       this.px += (this.tx - this.px) * 0.04;
       this.py += (this.ty - this.py) * 0.04;
-
       ctx.clearRect(0, 0, w, h);
-
-      const cx = w / 2 + this.px * 16;
-      const cy = h / 2 + Math.sin(t * 0.45) * 5 + this.py * 16;
-      const zoom = Math.min(w, h) / 780;
-      const ax = 0.36 + Math.sin(t * 0.16) * 0.04 + this.py * 0.05;
-      const ay = t * 0.11 + this.px * 0.12;
-
-      /* 环境光 */
-      const bg = ctx.createRadialGradient(cx, cy, 4, cx, cy, Math.min(w, h) * 0.62);
-      bg.addColorStop(0, 'rgba(214, 178, 112, 0.16)');
-      bg.addColorStop(0.42, 'rgba(140, 108, 60, 0.06)');
-      bg.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, w, h);
-
-      const P = (p) => this.project(p, cx, cy, zoom, ax, ay);
-
-      /* --- 背面的环 --- */
-      this.strokeRing(ctx, P, t, false);
-
-      /* --- 表盘 --- */
-      this.drawDial(ctx, cx, cy, zoom, ax, t);
-
-      /* --- 正面的环 --- */
-      this.strokeRing(ctx, P, t, true);
-
-      /* --- 光尘 --- */
-      this.drawDust(ctx, cx, cy, w, h, t);
-    }
-
-    strokeRing(ctx, P, t, front) {
-      RINGS.forEach((ring, idx) => {
-        const spin = t * ring.speed + idx;
-        ctx.beginPath();
-        let pen = false;
-        const N = 180;
-        for (let i = 0; i <= N; i++) {
-          const th = (i / N) * TAU;
-          const p = this.ringPoint(ring.r, th, ring.tx, ring.tz + spin);
-          const pts = P(p);
-          const isFront = p[2] > 0;
-          if (isFront !== front) { pen = false; continue; }
-          if (!pen) { ctx.moveTo(pts[0], pts[1]); pen = true; }
-          else ctx.lineTo(pts[0], pts[1]);
-        }
-        if (front) {
-          ctx.strokeStyle = 'rgba(242, 222, 188, 0.62)';
-          ctx.lineWidth = 1.15;
-          ctx.shadowColor = 'rgba(214, 178, 112, 0.5)';
-          ctx.shadowBlur = 16;
-        } else {
-          ctx.strokeStyle = 'rgba(196, 163, 104, 0.14)';
-          ctx.lineWidth = 0.9;
-          ctx.shadowBlur = 0;
-        }
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-
-        /* 环上的黄铜珠 */
-        ring.beads.forEach((offset) => {
-          const th = t * ring.speed * 1.4 + offset;
-          const p = this.ringPoint(ring.r, th, ring.tx, ring.tz + spin);
-          if ((p[2] > 0) !== front) return;
-          const pts = P(p);
-          const r = 4.6 * pts[2] * (front ? 1 : 0.75);
-          const g = ctx.createRadialGradient(pts[0] - r * 0.3, pts[1] - r * 0.3, 0.4, pts[0], pts[1], r);
-          g.addColorStop(0, 'rgba(255, 246, 220, 0.95)');
-          g.addColorStop(0.55, 'rgba(230, 199, 141, 0.9)');
-          g.addColorStop(1, 'rgba(150, 114, 60, 0.15)');
-          ctx.beginPath();
-          ctx.arc(pts[0], pts[1], r, 0, TAU);
-          ctx.fillStyle = g;
-          ctx.shadowColor = 'rgba(240, 200, 130, 0.8)';
-          ctx.shadowBlur = 12;
-          ctx.fill();
-          ctx.shadowBlur = 0;
-        });
-      });
-    }
-
-    drawDial(ctx, cx, cy, zoom, ax, t) {
-      const tiltX = 0.30 + Math.sin(t * 0.4) * 0.015;
-      const P = (p) => this.project(p, cx, cy, zoom, ax, 0);
-
-      const dp = (r, th) => {
-        const x0 = Math.cos(th) * r;
-        const y0 = Math.sin(th) * r;
-        const c = Math.cos(tiltX), s = Math.sin(tiltX);
-        return [x0, y0 * c, y0 * s];
-      };
-
-      const R = 205;
-
-      /* 盘面外的一圈柔光，避免表盘"贴"在背景上 */
-      const glow = ctx.createRadialGradient(cx, cy, R * zoom * 0.55, cx, cy, R * zoom * 1.7);
-      glow.addColorStop(0, 'rgba(214, 178, 112, 0.10)');
-      glow.addColorStop(0.55, 'rgba(214, 178, 112, 0.045)');
-      glow.addColorStop(1, 'rgba(214, 178, 112, 0)');
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * zoom * 1.7, 0, TAU);
-      ctx.fill();
-
-      /* 盘面 */
-      ctx.beginPath();
-      for (let i = 0; i <= 120; i++) {
-        const pts = P(dp(R, (i / 120) * TAU));
-        i === 0 ? ctx.moveTo(pts[0], pts[1]) : ctx.lineTo(pts[0], pts[1]);
-      }
-      ctx.closePath();
-      const fill = ctx.createRadialGradient(cx - R * zoom * 0.35, cy - R * zoom * 0.4, R * zoom * 0.1,
-        cx, cy, R * zoom * 1.08);
-      fill.addColorStop(0, 'rgba(38, 52, 84, 0.97)');
-      fill.addColorStop(0.5, 'rgba(17, 24, 40, 0.98)');
-      fill.addColorStop(1, 'rgba(6, 8, 14, 0.99)');
-      ctx.fillStyle = fill;
-      ctx.fill();
-
-      /* 盘面高光：像一层玻璃 */
-      const sheen = ctx.createLinearGradient(cx - R * zoom, cy - R * zoom, cx + R * zoom * 0.6, cy + R * zoom);
-      sheen.addColorStop(0, 'rgba(255, 245, 220, 0.07)');
-      sheen.addColorStop(0.4, 'rgba(255, 245, 220, 0.015)');
-      sheen.addColorStop(1, 'rgba(255, 245, 220, 0)');
-      ctx.fillStyle = sheen;
-      ctx.fill();
-
-      /* 内圈 */
-      ctx.beginPath();
-      for (let i = 0; i <= 120; i++) {
-        const pts = P(dp(R * 0.62, (i / 120) * TAU));
-        i === 0 ? ctx.moveTo(pts[0], pts[1]) : ctx.lineTo(pts[0], pts[1]);
-      }
-      ctx.closePath();
-      ctx.strokeStyle = 'rgba(232, 208, 160, 0.12)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      /* 外沿 */
-      ctx.strokeStyle = 'rgba(232, 208, 160, 0.75)';
-      ctx.lineWidth = 1.6;
-      ctx.stroke();
-      ctx.beginPath();
-      for (let i = 0; i <= 120; i++) {
-        const pts = P(dp(R * 0.94, (i / 120) * TAU));
-        i === 0 ? ctx.moveTo(pts[0], pts[1]) : ctx.lineTo(pts[0], pts[1]);
-      }
-      ctx.closePath();
-      ctx.strokeStyle = 'rgba(232, 208, 160, 0.16)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      /* 刻度 */
-      for (let i = 0; i < 60; i++) {
-        const th = (i / 60) * TAU - Math.PI / 2;
-        const major = i % 5 === 0;
-        const a = P(dp(R * (major ? 0.80 : 0.86), th));
-        const b = P(dp(R * 0.9, th));
-        ctx.beginPath();
-        ctx.moveTo(a[0], a[1]);
-        ctx.lineTo(b[0], b[1]);
-        ctx.strokeStyle = major ? 'rgba(242, 226, 194, 0.55)' : 'rgba(242, 226, 194, 0.18)';
-        ctx.lineWidth = major ? 1.3 : 0.7;
-        ctx.stroke();
-      }
-
-      /* 罗马数字 */
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = 'rgba(238, 226, 202, 0.62)';
-      const marks = [['XII', 0], ['III', 0.25], ['VI', 0.5], ['IX', 0.75]];
-      marks.forEach(([label, frac]) => {
-        const th = frac * TAU - Math.PI / 2;
-        const pts = P(dp(R * 0.66, th));
-        ctx.font = `${Math.round(21 * pts[2] * Math.min(this.w, this.h) / 780 * 1.6)}px Georgia, "Times New Roman", serif`;
-        ctx.fillText(label, pts[0], pts[1]);
-      });
-
-      /* 指针：真实时间 */
-      const now = new Date();
-      const sec = now.getSeconds() + now.getMilliseconds() / 1000;
-      const min = now.getMinutes() + sec / 60;
-      const hour = (now.getHours() % 12) + min / 60;
-
-      const center = P([0, 0, 0]);
-      const hand = (frac, len, width, color, alpha) => {
-        const th = frac * TAU - Math.PI / 2;
-        const tip = P(dp(len, th));
-        const tail = P(dp(-len * 0.12, th));
-        ctx.beginPath();
-        ctx.moveTo(tail[0], tail[1]);
-        ctx.lineTo(tip[0], tip[1]);
-        ctx.strokeStyle = color;
-        ctx.globalAlpha = alpha;
-        ctx.lineWidth = width * zoom * 1.6;
-        ctx.lineCap = 'round';
-        ctx.shadowColor = 'rgba(255, 232, 190, 0.45)';
-        ctx.shadowBlur = 8;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
-      };
-
-      hand(hour / 12, R * 0.5, 2.1, '#f5e6c6', 0.95);
-      hand(min / 60, R * 0.74, 1.5, '#f7ecd4', 0.95);
-      hand(sec / 60, R * 0.82, 0.7, '#e6a887', 0.9);
-
-      /* 中心轴 */
-      const capR = 5.2 * zoom * 1.6;
-      const cap = ctx.createRadialGradient(center[0] - capR * 0.4, center[1] - capR * 0.4, 0.5, center[0], center[1], capR);
-      cap.addColorStop(0, '#fff6dc');
-      cap.addColorStop(0.6, '#c9a86a');
-      cap.addColorStop(1, '#4a3517');
-      ctx.beginPath();
-      ctx.arc(center[0], center[1], capR, 0, TAU);
-      ctx.fillStyle = cap;
-      ctx.fill();
-    }
-
-    drawDust(ctx, cx, cy, w, h, t) {
-      if (!this.dust) {
-        this.dust = Array.from({ length: 26 }, () => ({
-          a: Math.random() * TAU,
-          r: 0.25 + Math.random() * 0.75,
-          s: 0.15 + Math.random() * 0.5,
-          o: Math.random() * TAU
-        }));
-      }
-      this.dust.forEach((d) => {
-        const ang = d.a + t * d.s * 0.12;
-        const rad = d.r * Math.min(w, h) * 0.48;
-        const x = cx + Math.cos(ang) * rad;
-        const y = cy + Math.sin(ang) * rad * 0.62;
-        const tw = 0.35 + 0.35 * Math.sin(t * 0.9 + d.o);
-        ctx.beginPath();
-        ctx.arc(x, y, 1.1 + d.r * 1.2, 0, TAU);
-        ctx.fillStyle = `rgba(236, 219, 186, ${0.10 + tw * 0.18})`;
-        ctx.fill();
-      });
+      drawOrrery(ctx, w, h, t, { px: this.px, py: this.py });
     }
   }
 
-  /* ===== 3. 星图 ===== */
-  const PLANET_DATA = [
+  /* ===== 4. 星图 ===== */
+  const TILT = -0.18;
+
+  const PLANETS = [
     {
-      key: 'data', a: 0.27, b: 0.20, period: 38, phase: 4.6, r: 46,
+      key: 'data', r: 44,
       lit: '#efe9ff', mid: '#9a86ff', dark: '#4a30b8', edge: '#1a0f45', glow: '150, 130, 255'
     },
     {
-      key: 'self', a: 0.35, b: 0.24, period: 52, phase: 0.7, r: 58, bands: true,
+      key: 'self', r: 56, bands: true,
       lit: '#ffffff', mid: '#e6e4dc', dark: '#6b6b6b', edge: '#141416', glow: '226, 230, 240'
     },
     {
-      key: 'finance', a: 0.44, b: 0.28, period: 68, phase: 2.8, r: 44, ring: true,
+      key: 'finance', r: 42, ring: true,
       lit: '#fff6d8', mid: '#f0c979', dark: '#a9711f', edge: '#3d2606', glow: '240, 205, 138'
     }
   ];
@@ -515,10 +492,9 @@
       this.h = 0;
       this.stars = [];
       this.nebula = [];
-      this.raf = 0;
+      this.belt = [];
       this.paused = false;
       this.resize();
-      this.seed();
     }
 
     resize() {
@@ -533,29 +509,54 @@
 
     seed() {
       const { w, h } = this;
-      const count = Math.max(90, Math.round((w * h) / 7000));
+      const count = Math.max(80, Math.round((w * h) / 8000));
       this.stars = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
-        r: Math.random() * 1.25 + 0.25,
+        r: Math.random() * 1.2 + 0.25,
         a: Math.random() * 0.5 + 0.18,
         tw: Math.random() * TAU,
         sp: 0.4 + Math.random() * 1.6
       }));
+
       this.nebula = [
-        { x: 0.26, y: 0.32, r: 0.44, c: '86, 70, 170', a: 0.13, sp: 0.05, ph: 0 },
-        { x: 0.76, y: 0.62, r: 0.4, c: '20, 90, 110', a: 0.1, sp: 0.04, ph: 1.8 },
-        { x: 0.52, y: 0.16, r: 0.34, c: '150, 110, 70', a: 0.08, sp: 0.06, ph: 3.4 }
+        { x: 0.28, y: 0.3, r: 0.46, c: '92, 74, 176', a: 0.15, sp: 0.05, ph: 0 },
+        { x: 0.74, y: 0.66, r: 0.42, c: '24, 94, 112', a: 0.11, sp: 0.04, ph: 1.8 }
       ];
+
+      /* 星尘环带：主带 + 两道稀疏外带 */
+      const palette = ['236, 226, 204', '240, 205, 138', '176, 158, 255', '214, 190, 150'];
+      this.belt = Array.from({ length: 340 }, (_, i) => {
+        const outer = i > 236;
+        const far = i > 300;
+        return {
+          ang: Math.random() * TAU,
+          rad: outer
+            ? (far ? 1.32 + Math.random() * 0.26 : 1.16 + Math.random() * 0.12)
+            : 0.985 + Math.random() * 0.17,
+          size: 0.6 + Math.random() * 1.9,
+          alpha: 0.12 + Math.random() * 0.5,
+          color: palette[Math.floor(Math.random() * palette.length)],
+          speed: 0.05 + (Math.random() - 0.5) * 0.02
+        };
+      });
     }
 
     start() {
       if (reduceMotion) return;
       const loop = (now) => {
         if (!this.paused) this.render(now / 1000);
-        this.raf = requestAnimationFrame(loop);
+        requestAnimationFrame(loop);
       };
-      this.raf = requestAnimationFrame(loop);
+      requestAnimationFrame(loop);
+    }
+
+    /* 椭圆轨道上的点（含视角倾斜） */
+    orbit(ang, A, B, cx, cy) {
+      const x0 = Math.cos(ang) * A;
+      const y0 = Math.sin(ang) * B;
+      const c = Math.cos(TILT), s = Math.sin(TILT);
+      return [cx + x0 * c - y0 * s, cy + x0 * s + y0 * c];
     }
 
     render(t) {
@@ -563,6 +564,13 @@
       if (!w || !h) return;
       const cx = w / 2;
       const cy = h / 2;
+
+      /* 轨道接近圆（0.96），保证三颗行星在屏幕上接近等边三角；
+         A 同时受高度、宽度与倾斜后的横向投影限制，避免行星被画布裁掉 */
+      const RATIO = 0.96;
+      const tiltK = Math.abs(Math.cos(TILT)) + RATIO * Math.abs(Math.sin(TILT));
+      const A = Math.min((h * 0.42) / RATIO, (w * 0.5 - 58) / tiltK);
+      const B = A * RATIO;
 
       ctx.clearRect(0, 0, w, h);
 
@@ -587,29 +595,54 @@
         ctx.fill();
       });
 
-      /* 轨道 */
-      this.planets.forEach((p) => this.drawOrbit(ctx, p, cx, cy));
+      /* 银河般的环带辉光 */
+      this.drawBand(ctx, cx, cy, A, t);
 
-      /* 位置 */
-      const objs = this.planets.map((p) => {
-        const ang = p.phase + t * (TAU / p.period);
-        const x = cx + Math.cos(ang) * p.a * w;
-        const y = cy + Math.sin(ang) * p.b * h;
-        return { p, ang, x, y, z: Math.sin(ang) };
+      /* 轨道线 */
+      [0.72, 1, 1.22, 1.44].forEach((k) => {
+        ctx.beginPath();
+        for (let i = 0; i <= 140; i++) {
+          const pts = this.orbit((i / 140) * TAU, A * k, B * k, cx, cy);
+          i === 0 ? ctx.moveTo(pts[0], pts[1]) : ctx.lineTo(pts[0], pts[1]);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = k === 1 ? 'rgba(214, 178, 112, 0.13)' : 'rgba(214, 178, 112, 0.055)';
+        ctx.lineWidth = k === 1 ? 1 : 0.8;
+        ctx.setLineDash(k === 1 ? [] : [2, 10]);
+        ctx.stroke();
+        ctx.setLineDash([]);
       });
 
-      /* 恒星后面 */
+      /* 星尘 */
+      this.drawBelt(ctx, cx, cy, A, B, t, false);
+
+      /* 行星位置：等边三角 */
+      const base = t * 0.16;
+      const objs = this.planets.map((p, i) => {
+        const ang = base + (i * TAU) / 3;
+        const pts = this.orbit(ang, A, B, cx, cy);
+        return { p, ang, x: pts[0], y: pts[1], z: Math.sin(ang) };
+      });
+
+      /* 远侧行星 */
       objs.filter((o) => o.z < 0).sort((m, n) => m.z - n.z)
-        .forEach((o) => this.drawPlanet(ctx, o, cx, cy));
+        .forEach((o) => this.drawPlanet(ctx, o, cx, cy, A, B));
 
-      /* 恒星 */
-      this.drawStar(ctx, cx, cy, t);
+      /* 中央时钟 */
+      const clockSize = Math.min(w * 0.4, h * 0.52);
+      ctx.save();
+      ctx.translate(cx - clockSize / 2, cy - clockSize / 2);
+      drawOrrery(ctx, clockSize, clockSize, t, { bg: false });
+      ctx.restore();
 
-      /* 恒星前面 */
+      /* 近侧行星 */
       objs.filter((o) => o.z >= 0).sort((m, n) => m.z - n.z)
-        .forEach((o) => this.drawPlanet(ctx, o, cx, cy));
+        .forEach((o) => this.drawPlanet(ctx, o, cx, cy, A, B));
 
-      /* 同步按钮位置 */
+      /* 近侧星尘（压在最前，增强层次） */
+      this.drawBelt(ctx, cx, cy, A, B, t, true);
+
+      /* 同步 DOM 按钮 */
       objs.forEach((o) => {
         const el = o.p.el;
         if (!el) return;
@@ -618,112 +651,74 @@
       });
     }
 
-    drawOrbit(ctx, p, cx, cy) {
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, p.a * this.w, p.b * this.h, 0, 0, TAU);
-      ctx.strokeStyle = 'rgba(201, 168, 106, 0.13)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([2, 9]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    drawStar(ctx, cx, cy, t) {
-      const fit = this.fit;
-      const R = 44 * fit;
-
-      const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 5);
-      halo.addColorStop(0, 'rgba(255, 226, 170, 0.42)');
-      halo.addColorStop(0.2, 'rgba(255, 190, 110, 0.2)');
-      halo.addColorStop(0.5, 'rgba(240, 150, 60, 0.07)');
-      halo.addColorStop(1, 'rgba(240, 150, 60, 0)');
-      ctx.fillStyle = halo;
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * 5, 0, TAU);
-      ctx.fill();
-
-      /* 光芒 */
+    drawBand(ctx, cx, cy, A, t) {
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(t * 0.05);
-      for (let i = 0; i < 24; i++) {
-        const a = (i / 24) * TAU;
-        const len = R * (2.4 + Math.sin(i * 1.7 + t * 0.6) * 0.5);
-        const g = ctx.createLinearGradient(0, 0, Math.cos(a) * len, Math.sin(a) * len);
-        g.addColorStop(0, 'rgba(255, 224, 170, 0.32)');
-        g.addColorStop(1, 'rgba(255, 200, 120, 0)');
+      ctx.rotate(TILT);
+      ctx.scale(1, 0.9);
+      const g = ctx.createRadialGradient(0, 0, A * 0.5, 0, 0, A * 1.5);
+      g.addColorStop(0, 'rgba(180, 150, 220, 0)');
+      g.addColorStop(0.45, 'rgba(170, 150, 210, 0.05)');
+      g.addColorStop(0.72, 'rgba(226, 200, 160, 0.09)');
+      g.addColorStop(0.9, 'rgba(226, 200, 160, 0.04)');
+      g.addColorStop(1, 'rgba(226, 200, 160, 0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(0, 0, A * 1.5, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    drawBelt(ctx, cx, cy, A, B, t, front) {
+      this.belt.forEach((b) => {
+        const ang = b.ang + t * b.speed;
+        const z = Math.sin(ang);
+        const isFront = z >= 0;
+        if (isFront !== front) return;
+        const pts = this.orbit(ang, A * b.rad, B * b.rad, cx, cy);
+        const depth = (z + 1) / 2;
+        const size = b.size * (0.7 + 0.6 * depth);
+        const alpha = b.alpha * (0.45 + 0.55 * depth);
         ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len);
-        ctx.strokeStyle = g;
-        ctx.lineWidth = 1.4;
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      /* 核心 */
-      const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
-      core.addColorStop(0, '#fffdf6');
-      core.addColorStop(0.32, '#fff0c8');
-      core.addColorStop(0.62, '#ffcf78');
-      core.addColorStop(0.85, '#f09a34');
-      core.addColorStop(1, 'rgba(200, 110, 30, 0)');
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, TAU);
-      ctx.fillStyle = core;
-      ctx.fill();
-
-      /* 十字光斑 */
-      ctx.save();
-      ctx.translate(cx, cy);
-      const flare = ctx.createLinearGradient(-R * 6, 0, R * 6, 0);
-      flare.addColorStop(0, 'rgba(255, 230, 180, 0)');
-      flare.addColorStop(0.5, 'rgba(255, 240, 205, 0.35)');
-      flare.addColorStop(1, 'rgba(255, 230, 180, 0)');
-      ctx.fillStyle = flare;
-      ctx.fillRect(-R * 6, -0.8, R * 12, 1.6);
-      ctx.rotate(Math.PI / 2);
-      const flare2 = ctx.createLinearGradient(-R * 3, 0, R * 3, 0);
-      flare2.addColorStop(0, 'rgba(255, 230, 180, 0)');
-      flare2.addColorStop(0.5, 'rgba(255, 240, 205, 0.22)');
-      flare2.addColorStop(1, 'rgba(255, 230, 180, 0)');
-      ctx.fillStyle = flare2;
-      ctx.fillRect(-R * 3, -0.7, R * 6, 1.4);
-      ctx.restore();
+        ctx.arc(pts[0], pts[1], size, 0, TAU);
+        ctx.fillStyle = `rgba(${b.color}, ${alpha})`;
+        ctx.fill();
+      });
     }
 
-    drawPlanet(ctx, o, cx, cy) {
+    drawPlanet(ctx, o, cx, cy, A, B) {
       const { p, x, y, z } = o;
-      const depth = (z + 1) / 2;                 // 0 远 → 1 近
-      const r = p.r * this.fit * (0.84 + 0.16 * depth);
-      const alpha = 0.72 + 0.28 * depth;
+      const depth = (z + 1) / 2;
+      const r = p.r * this.fit * (0.82 + 0.22 * depth);
+      const alpha = 0.7 + 0.3 * depth;
 
       /* 拖尾 */
-      const trailN = 3;
-      for (let i = 0; i < trailN; i++) {
-        const a0 = o.ang - (i + 1) * 0.05;
-        const a1 = o.ang - i * 0.05;
+      for (let i = 0; i < 4; i++) {
+        const a0 = o.ang - (i + 1) * 0.045;
+        const a1 = o.ang - i * 0.045;
+        const pa = this.orbit(a0, A, B, cx, cy);
+        const pb = this.orbit(a1, A, B, cx, cy);
         ctx.beginPath();
-        ctx.ellipse(cx, cy, p.a * this.w, p.b * this.h, 0, a0, a1);
-        ctx.strokeStyle = `rgba(${p.glow}, ${0.16 - i * 0.045})`;
-        ctx.lineWidth = 2.4 - i * 0.6;
+        ctx.moveTo(pa[0], pa[1]);
+        ctx.lineTo(pb[0], pb[1]);
+        ctx.strokeStyle = `rgba(${p.glow}, ${0.18 - i * 0.04})`;
+        ctx.lineWidth = 2.6 - i * 0.5;
+        ctx.lineCap = 'round';
         ctx.stroke();
       }
 
       /* 大气 */
-      const halo = ctx.createRadialGradient(x, y, r * 0.9, x, y, r * 1.6);
-      halo.addColorStop(0, `rgba(${p.glow}, ${0.3 * alpha})`);
+      const halo = ctx.createRadialGradient(x, y, r * 0.9, x, y, r * 1.65);
+      halo.addColorStop(0, `rgba(${p.glow}, ${0.32 * alpha})`);
       halo.addColorStop(0.55, `rgba(${p.glow}, ${0.1 * alpha})`);
       halo.addColorStop(1, `rgba(${p.glow}, 0)`);
       ctx.beginPath();
-      ctx.arc(x, y, r * 1.6, 0, TAU);
+      ctx.arc(x, y, r * 1.65, 0, TAU);
       ctx.fillStyle = halo;
       ctx.fill();
 
-      /* 光环（后半） */
       if (p.ring) this.drawRing(ctx, x, y, r, alpha, false);
 
-      /* 球体 */
       const sunAng = Math.atan2(cy - y, cx - x);
       const lx = Math.cos(sunAng);
       const ly = Math.sin(sunAng);
@@ -739,7 +734,6 @@
       ctx.fillStyle = g;
       ctx.fill();
 
-      /* 暗面 */
       ctx.save();
       ctx.beginPath();
       ctx.arc(x, y, r, 0, TAU);
@@ -752,25 +746,21 @@
       ctx.fillStyle = sh;
       ctx.fillRect(x - r, y - r, r * 2, r * 2);
 
-      /* 条纹 */
       if (p.bands) {
         for (let i = 0; i < 7; i++) {
           const yy = y - r + (i + 0.5) * (r * 2 / 7);
-          const hgt = r * 0.13;
-          ctx.fillStyle = i % 2 ? 'rgba(10, 10, 12, 0.55)' : 'rgba(255, 255, 255, 0.10)';
-          ctx.fillRect(x - r, yy, r * 2, hgt);
+          ctx.fillStyle = i % 2 ? 'rgba(10, 10, 12, 0.5)' : 'rgba(255, 255, 255, 0.1)';
+          ctx.fillRect(x - r, yy, r * 2, r * 0.13);
         }
       }
       ctx.restore();
 
-      /* 边缘反光 */
       ctx.beginPath();
       ctx.arc(x, y, r * 0.985, 0, TAU);
-      ctx.strokeStyle = `rgba(${p.glow}, ${0.42 * alpha})`;
+      ctx.strokeStyle = `rgba(${p.glow}, ${0.45 * alpha})`;
       ctx.lineWidth = 1.2;
       ctx.stroke();
 
-      /* 光环（前半） */
       if (p.ring) this.drawRing(ctx, x, y, r, alpha, true);
 
       ctx.globalAlpha = 1;
@@ -796,7 +786,7 @@
     }
   }
 
-  /* 页面初始化 */
+  /* ===== 5. 页面初始化 ===== */
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
@@ -811,19 +801,16 @@
     backdrop.start();
   }
 
-  /* 首屏视差：钟比文字走得慢一点 */
   const orreryEl = document.getElementById('orrery');
   if (orreryEl) {
     let paraTick = false;
-    const parallax = () => {
-      const y = clamp(window.scrollY * 0.07, 0, 40);
-      orreryEl.style.setProperty('--py', `${y.toFixed(1)}px`);
-      paraTick = false;
-    };
     window.addEventListener('scroll', () => {
       if (paraTick) return;
       paraTick = true;
-      requestAnimationFrame(parallax);
+      requestAnimationFrame(() => {
+        orreryEl.style.setProperty('--py', `${clamp(window.scrollY * 0.07, 0, 40).toFixed(1)}px`);
+        paraTick = false;
+      });
     }, { passive: true });
   }
 
@@ -846,15 +833,15 @@
   const galaxyCanvas = document.getElementById('galaxy-canvas');
   let galaxy = null;
   if (solar && galaxyCanvas) {
-    PLANET_DATA.forEach((p) => {
+    PLANETS.forEach((p) => {
       p.el = solar.querySelector(`[data-planet="${p.key}"]`);
     });
-    galaxy = new Galaxy(solar, galaxyCanvas, PLANET_DATA);
+    galaxy = new Galaxy(solar, galaxyCanvas, PLANETS);
     galaxy.start();
     observeSize(solar, () => galaxy.resize());
   }
 
-  /* ===== 4. 弹窗 ===== */
+  /* ===== 6. 弹窗 ===== */
   class PlanetFX {
     constructor(canvas) {
       this.canvas = canvas;
