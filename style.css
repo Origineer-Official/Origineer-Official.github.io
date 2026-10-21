@@ -153,11 +153,11 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 500; }
 .logo { font-family: var(--serif); font-size: 19px; color: var(--ivory); }
 .logo .dot { color: var(--brass); }
 
-.nav-links { display: flex; gap: 34px; }
+.nav-links { display: flex; gap: 38px; }
 .nav-links a {
   font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.2em;
+  font-size: 13px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
   position: relative;
@@ -416,7 +416,7 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 500; }
 
 .planet--self,
 .planet--finance,
-.planet--data { width: 138px; height: 138px; }
+.planet--data { width: 164px; height: 164px; }
 
 .galaxy-hint {
   position: absolute;
@@ -816,7 +816,7 @@ h1, h2, h3, h4 { line-height: 1.3; font-weight: 500; }
   .solar { height: clamp(430px, 60vh, 560px); }
   .planet--self,
   .planet--finance,
-  .planet--data { width: 96px; height: 96px; }
+  .planet--data { width: 112px; height: 112px; }
   .planet-label { font-size: 8.5px; letter-spacing: 0.12em; padding: 3px 8px; margin-top: 9px; }
 
   .section { padding-top: 84px; }

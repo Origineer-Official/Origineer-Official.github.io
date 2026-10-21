@@ -582,15 +582,15 @@
 
   const PLANETS = [
     {
-      key: 'data', r: 60,
+      key: 'data', r: 72,
       lit: '#efe9ff', mid: '#9a86ff', dark: '#4a30b8', edge: '#1a0f45', glow: '150, 130, 255'
     },
     {
-      key: 'self', r: 60, bands: true,
-      lit: '#6a6a72', mid: '#1b1b20', dark: '#08080a', edge: '#000000', glow: '120, 150, 210'
+      key: 'self', r: 72, bands: true,
+      lit: '#a8d0ff', mid: '#2f6fd0', dark: '#123a78', edge: '#04101f', glow: '120, 180, 255'
     },
     {
-      key: 'finance', r: 60, ring: true,
+      key: 'finance', r: 72, ring: true,
       lit: '#fff6d8', mid: '#f0c979', dark: '#a9711f', edge: '#3d2606', glow: '240, 205, 138'
     }
   ];
@@ -633,7 +633,7 @@
 
       const RATIO = 0.96;
       const tiltK = Math.abs(Math.cos(TILT)) + RATIO * Math.abs(Math.sin(TILT));
-      this.A = Math.min((h * 0.5 - 88) / RATIO, (w * 0.5 - 78) / tiltK);
+      this.A = Math.min((h * 0.5 - 100) / RATIO, (w * 0.5 - 84) / tiltK);
       this.B = this.A * RATIO;
 
       this.seed();
@@ -949,7 +949,7 @@
           const curve = Math.sin((i / 8) * Math.PI) * r * 0.1;
           ctx.beginPath();
           ctx.ellipse(x, yy, r * 1.05, hgt, 0, 0, TAU);
-          ctx.fillStyle = i % 2 ? 'rgba(0, 0, 0, 0.7)' : 'rgba(170, 190, 225, 0.10)';
+          ctx.fillStyle = i % 2 ? 'rgba(6, 26, 58, 0.55)' : 'rgba(170, 215, 255, 0.16)';
           ctx.fill();
           void curve;
         }
