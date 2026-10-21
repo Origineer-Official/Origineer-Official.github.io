@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Origineer · 个人主页</title>
-  <meta name="description" content="Origineer 的个人主页 —— 中国人民大学统计学院学生，关注人文社科、音乐、游戏，以及AI4Science与投资理财 。">
+  <meta name="description" content="Origineer 的个人主页 —— 中国人民大学统计学院学生，关注人文社科、音乐、游戏，以及 AI4Science 与投资理财。">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -21,117 +21,214 @@
   <header class="nav">
     <a class="logo" href="#top">Origineer<span class="dot">.</span></a>
     <nav class="nav-links">
-      <a href="#about">关于</a>
-      <a href="#journey">经历</a>
-      <a href="#skills">技能</a>
+      <a href="#galaxy">星系</a>
       <a href="#works">作品</a>
-      <a href="#hobbies">兴趣</a>
     </nav>
   </header>
 
   <main id="top">
-    <!-- 首屏 -->
+    <!-- ================= 首屏：行走的机械时钟 ================= -->
     <section class="hero">
-      <p class="hero-tag">Hello, world</p>
-      <h1 class="hero-title">
-        我是 <span class="gradient">Origineer</span>
-      </h1>
-      <p class="hero-sub">
-        统计学院学生 · 人文社科爱好者 · 音乐游戏玩家<br>
-        正在探索 <strong>投资理财</strong> 与 <strong>AI for Science</strong> 的交汇处。
-      </p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="#about">了解我</a>
-        <a class="btn btn-ghost" href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub ↗</a>
+      <div class="hero-copy">
+        <p class="hero-tag">Hello, world</p>
+        <h1 class="hero-title">
+          我是 <span class="gradient">Origineer</span>
+        </h1>
+        <p class="hero-sub">
+          统计学院学生 · 人文社科爱好者 · 音乐游戏玩家<br>
+          正在探索 <strong>投资理财</strong> 与 <strong>AI for Science</strong> 的交汇处。
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#galaxy">进入星系</a>
+          <a class="btn btn-ghost" href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
       </div>
+
+      <!-- 机械时钟 -->
+      <div class="clock-stage" aria-hidden="true">
+        <div class="clock-glow"></div>
+        <svg class="walk-clock" viewBox="0 0 640 900" role="presentation" focusable="false">
+          <defs>
+            <radialGradient id="caseMetal" cx="34%" cy="26%" r="80%">
+              <stop offset="0%" stop-color="#f9e9c3"/>
+              <stop offset="34%" stop-color="#d9b475"/>
+              <stop offset="70%" stop-color="#9a7439"/>
+              <stop offset="100%" stop-color="#4a3114"/>
+            </radialGradient>
+            <radialGradient id="dialFace" cx="42%" cy="30%" r="82%">
+              <stop offset="0%" stop-color="#26304a"/>
+              <stop offset="62%" stop-color="#111726"/>
+              <stop offset="100%" stop-color="#06080f"/>
+            </radialGradient>
+            <linearGradient id="handMetal" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#fff0c9"/>
+              <stop offset="48%" stop-color="#e3c184"/>
+              <stop offset="100%" stop-color="#8c6728"/>
+            </linearGradient>
+            <linearGradient id="limbMetal" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#d3ae71"/>
+              <stop offset="55%" stop-color="#a07a3c"/>
+              <stop offset="100%" stop-color="#4f3816"/>
+            </linearGradient>
+            <filter id="clockGlow" x="-45%" y="-45%" width="190%" height="190%">
+              <feGaussianBlur stdDeviation="16" result="b"/>
+              <feMerge>
+                <feMergeNode in="b"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <ellipse class="clock-shadow" cx="320" cy="758" rx="158" ry="15" fill="#000" opacity=".55"/>
+
+          <g class="walker">
+            <!-- 左腿：translate 放在外层，动画只作用于内层，避免 CSS transform 覆盖 SVG 位移 -->
+            <g class="leg leg-l" transform="translate(272,512)">
+              <g class="thigh">
+                <rect x="-13" y="-8" width="26" height="120" rx="13" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
+                <g transform="translate(0,110)">
+                  <g class="shin">
+                    <rect x="-11" y="0" width="22" height="106" rx="11" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
+                    <rect class="foot" x="-36" y="98" width="74" height="18" rx="9" fill="#3a2a12" stroke="#c9a468" stroke-width="2"/>
+                  </g>
+                </g>
+              </g>
+            </g>
+
+            <!-- 右腿 -->
+            <g class="leg leg-r" transform="translate(368,512)">
+              <g class="thigh">
+                <rect x="-13" y="-8" width="26" height="120" rx="13" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
+                <g transform="translate(0,110)">
+                  <g class="shin">
+                    <rect x="-11" y="0" width="22" height="106" rx="11" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
+                    <rect class="foot" x="-36" y="98" width="74" height="18" rx="9" fill="#3a2a12" stroke="#c9a468" stroke-width="2"/>
+                  </g>
+                </g>
+              </g>
+            </g>
+
+            <!-- 左臂 -->
+            <g class="arm arm-l" transform="translate(152,455)">
+              <g class="upper-arm">
+                <rect x="-9" y="-6" width="18" height="88" rx="9" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
+                <g transform="translate(0,80)">
+                  <g class="fore-arm">
+                    <rect x="-8" y="0" width="16" height="74" rx="8" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
+                    <circle cx="0" cy="82" r="13" fill="#c9a468" stroke="#241708" stroke-width="2"/>
+                  </g>
+                </g>
+              </g>
+            </g>
+
+            <!-- 右臂 -->
+            <g class="arm arm-r" transform="translate(488,455)">
+              <g class="upper-arm">
+                <rect x="-9" y="-6" width="18" height="88" rx="9" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
+                <g transform="translate(0,80)">
+                  <g class="fore-arm">
+                    <rect x="-8" y="0" width="16" height="74" rx="8" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
+                    <circle cx="0" cy="82" r="13" fill="#c9a468" stroke="#241708" stroke-width="2"/>
+                  </g>
+                </g>
+              </g>
+            </g>
+
+            <!-- 表体 -->
+            <g class="clock-body">
+              <circle cx="320" cy="350" r="203" fill="url(#caseMetal)" stroke="#2a1c09" stroke-width="4"/>
+              <circle cx="320" cy="350" r="203" fill="none" stroke="#ffe9b3" stroke-width="1.5" opacity=".5"/>
+              <circle cx="320" cy="350" r="185" fill="none" stroke="#f7e2b2" stroke-width="2" opacity=".35"/>
+              <circle cx="320" cy="350" r="174" fill="url(#dialFace)"/>
+
+              <!-- 刻度 -->
+              <circle cx="320" cy="350" r="152" fill="none" stroke="#d8c096" stroke-width="2.5"
+                      stroke-dasharray="2.6 13.3" opacity=".55"/>
+              <circle cx="320" cy="350" r="138" fill="none" stroke="#f2ddb0" stroke-width="15"
+                      stroke-dasharray="5.5 66.8" opacity=".9"/>
+
+              <!-- 机芯齿轮 -->
+              <g class="gears" transform="translate(320,350)" opacity=".62">
+                <g class="gear gear-a">
+                  <circle r="47" fill="none" stroke="#96702f" stroke-width="12" stroke-dasharray="7 9"/>
+                  <circle r="35" fill="none" stroke="#b8934e" stroke-width="2"/>
+                  <rect x="-3" y="-35" width="6" height="70" fill="#b8934e"/>
+                  <rect x="-35" y="-3" width="70" height="6" fill="#b8934e"/>
+                  <circle r="8" fill="#d9b475"/>
+                </g>
+                <g transform="translate(62,-36)">
+                  <g class="gear gear-b">
+                    <circle r="27" fill="none" stroke="#8a6628" stroke-width="10" stroke-dasharray="5 8"/>
+                    <circle r="17" fill="none" stroke="#b8934e" stroke-width="2"/>
+                    <circle r="5" fill="#b8934e"/>
+                  </g>
+                </g>
+              </g>
+
+              <!-- 指针 -->
+              <g class="hands" transform="translate(320,350)">
+                <g class="hand hand-hour">
+                  <rect x="-6.5" y="-112" width="13" height="112" rx="6.5" fill="url(#handMetal)"/>
+                </g>
+                <g class="hand hand-minute">
+                  <rect x="-4.5" y="-160" width="9" height="160" rx="4.5" fill="url(#handMetal)"/>
+                </g>
+                <g class="hand hand-second">
+                  <rect x="-1.6" y="-160" width="3.2" height="180" rx="1.6" fill="#ff6ec7"/>
+                  <circle cx="0" cy="26" r="6.5" fill="#ff6ec7"/>
+                </g>
+                <circle r="13" fill="#2a1c09" stroke="#e3c184" stroke-width="2"/>
+                <circle r="4.5" fill="#ffe9b3"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+      </div>
+
       <div class="scroll-hint" aria-hidden="true">↓</div>
     </section>
 
-    <!-- 关于我 -->
-    <section id="about" class="section">
-      <h2 class="section-title"><span class="idx">01</span>关于我</h2>
-      <div class="panel about-panel">
-        <p>
-          你好，我是 Origineer。目前就读于 <strong>中国人民大学统计学院</strong>，大二在读。
-          统计训练让我习惯用数据和概率去看待世界，而我也一直着迷于那些无法被简单量化的部分，
-          比如人文社科里的叙事与思想，比如一段旋律带来的情绪。
+    <!-- ================= 星 系 ================= -->
+    <section id="galaxy" class="galaxy">
+      <header class="galaxy-head">
+        <h2 class="section-title"><span class="idx">01</span>三条轨道</h2>
+        <p class="galaxy-sub">
+          一颗颗行星沿着各自的轨道运行，彼此并不相交，却共享同一片引力。
         </p>
-        <p>
-          我不太想把兴趣和学业分成两条互不相干的线。数据可以为社会研究提供方法，
-          音乐和游戏的交互设计里也藏着重重的概率与反馈机制。
-          未来我希望在 <strong>投资理财</strong> 与 <strong>AI4Science</strong> 两个方向上深入下去，
-          前者关乎如何在不确定性中做决策，后者关乎如何让模型真正理解自然与科学问题。
-        </p>
+      </header>
+
+      <div class="solar" id="solar">
+        <canvas class="stars" id="stars" aria-hidden="true"></canvas>
+        <div class="sun" aria-hidden="true">
+          <span class="sun-core"></span>
+          <span class="sun-ring"></span>
+        </div>
+
+        <button class="planet planet--self" type="button" data-planet="self"
+                aria-label="学业与爱好：黑白行星">
+          <span class="planet-surface"></span>
+          <span class="planet-label">学业与爱好</span>
+        </button>
+
+        <button class="planet planet--finance" type="button" data-planet="finance"
+                aria-label="投资理财：金色行星">
+          <span class="planet-surface"></span>
+          <span class="planet-label">投资理财</span>
+        </button>
+
+        <button class="planet planet--data" type="button" data-planet="data"
+                aria-label="数据科学与 AI4Science：蓝紫行星">
+          <span class="planet-surface"></span>
+          <span class="planet-label">数据科学 · AI4Science</span>
+        </button>
       </div>
+
+      <p class="galaxy-hint" aria-hidden="true">轻触行星 · 展开轨道细节</p>
     </section>
 
-    <!-- 学习与经历 -->
-    <section id="journey" class="section">
-      <h2 class="section-title"><span class="idx">02</span>学习与经历</h2>
-      <div class="timeline">
-        <article class="tl-item">
-          <span class="tl-dot" aria-hidden="true"></span>
-          <div class="tl-card">
-            <h3>中国人民大学 · 统计学院</h3>
-            <p class="tl-meta">本科在读 · 大二</p>
-            <p>正在系统学习概率论、数理统计与数据分析，以逐步建立起以数据为核心的思考方式。</p>
-          </div>
-        </article>
-        <article class="tl-item">
-          <span class="tl-dot" aria-hidden="true"></span>
-          <div class="tl-card">
-            <h3>人文社科的持续阅读</h3>
-            <p class="tl-meta">课外 · 持续进行</p>
-            <p>在理工课程之外，保持对历史、社会、哲学等领域的阅读兴趣，偶尔尝试用统计的视角去理解社会议题。</p>
-          </div>
-        </article>
-        <article class="tl-item">
-          <span class="tl-dot" aria-hidden="true"></span>
-          <div class="tl-card">
-            <h3>投资理财 · 初步探索</h3>
-            <p class="tl-meta">感兴趣的方向</p>
-            <p>从最基础的资产配置与风险管理概念入手，关注概率思维在真实决策中的应用。</p>
-          </div>
-        </article>
-        <article class="tl-item">
-          <span class="tl-dot" aria-hidden="true"></span>
-          <div class="tl-card">
-            <h3>AI for Science · 未来目标</h3>
-            <p class="tl-meta">规划中的方向</p>
-            <p>希望了解机器学习等数据科学的方法如何被用于生命科学等领域科学研究，成为统计背景与科学问题之间的桥梁。</p>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <!-- 技能标签 -->
-    <section id="skills" class="section">
-      <h2 class="section-title"><span class="idx">03</span>技能与关注</h2>
-      <div class="skill-groups">
-        <div class="skill-group">
-          <h3>统计与数据</h3>
-          <ul class="tags">
-            <li>概率论</li><li>数理统计</li><li>数据分析</li><li>R</li><li>Python</li>
-          </ul>
-        </div>
-        <div class="skill-group">
-          <h3>正在学习</h3>
-          <ul class="tags">
-            <li>机器学习</li><li>资产配置</li><li>风险管理</li><li>AI4Science</li>
-          </ul>
-        </div>
-        <div class="skill-group">
-          <h3>兴趣领域</h3>
-          <ul class="tags">
-            <li>人文社科</li><li>投资理财</li><li>音乐</li><li>游戏</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- 作品 / 项目 -->
+    <!-- ================= 作品 ================= -->
     <section id="works" class="section">
-      <h2 class="section-title"><span class="idx">04</span>作品与项目</h2>
+      <h2 class="section-title"><span class="idx">02</span>作品与项目</h2>
       <div class="cards">
         <article class="card">
           <div class="card-top">
@@ -139,52 +236,25 @@
             <span class="card-year">2025</span>
           </div>
           <h3>个人主页</h3>
-          <p>这是你正在看的这个网站。纯 HTML / CSS ，通过 GitHub Pages 部署发布。</p>
+          <p>这是你正在看的这个网站。纯 HTML / CSS 手写，通过 GitHub Pages 部署发布。</p>
           <div class="card-tags"><span>HTML</span><span>CSS</span><span>GitHub Pages</span></div>
         </article>
         <article class="card card-ghost">
           <div class="card-top">
-            <span class="card-badge">Soon</span>
+            <span class="card-badge card-badge--soon">In progress</span>
           </div>
-          <h3>项目占位</h3>
-          <p>这里之后会放我的课程作业、数据分析练习或小项目（暂时还没搬上来……）。</p>
-          <div class="card-tags"><span>待补充</span></div>
+          <h3>课程与数据分析练习</h3>
+          <p>概率论与数理统计的课程作业，以及一些用 R 和 Python 做的小练习，正在陆续整理。</p>
+          <div class="card-tags"><span>R</span><span>Python</span></div>
         </article>
         <article class="card card-ghost">
           <div class="card-top">
-            <span class="card-badge">Soon</span>
+            <span class="card-badge card-badge--soon">In progress</span>
           </div>
-          <h3>项目占位</h3>
-          <p>另一个占位卡片(好吧依旧暂时没有东西……)。</p>
-          <div class="card-tags"><span>待补充</span></div>
+          <h3>读书与笔记</h3>
+          <p>人文社科与脑科学、意识科学相关的阅读笔记，之后会挑一些整理出来。</p>
+          <div class="card-tags"><span>阅读</span><span>笔记</span></div>
         </article>
-      </div>
-    </section>
-
-    <!-- 兴趣爱好 -->
-    <section id="hobbies" class="section">
-      <h2 class="section-title"><span class="idx">05</span>兴趣爱好</h2>
-      <div class="hobby-grid">
-        <div class="hobby">
-          <div class="hobby-icon">📚</div>
-          <h3>人文社科</h3>
-          <p>喜欢读历史与社会、脑科学意识科学相关的书，享受在宏大叙事里寻找细微逻辑的过程。</p>
-        </div>
-        <div class="hobby">
-          <div class="hobby-icon">🎵</div>
-          <h3>音乐</h3>
-          <p>耳机常驻。音乐是整理思绪和切换状态最快的方式，也是运动时不可或缺的一环。</p>
-        </div>
-        <div class="hobby">
-          <div class="hobby-icon">🎮</div>
-          <h3>游戏</h3>
-          <p>喜欢有深度系统的游戏，也乐于琢磨相关设定。</p>
-        </div>
-        <div class="hobby">
-          <div class="hobby-icon">📈</div>
-          <h3>投资理财</h3>
-          <p>关注市场与资产配置，把课堂上的概率思维带进真实世界的判断。</p>
-        </div>
       </div>
     </section>
   </main>
@@ -196,6 +266,170 @@
       <a href="#top">回到顶部</a>
     </p>
   </footer>
+
+  <!-- ================= 行星详情 ================= -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-stage" id="modal-stage" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <canvas class="modal-fx" id="modal-fx" aria-hidden="true"></canvas>
+      <div class="modal-veil" aria-hidden="true"></div>
+      <button class="modal-close" type="button" aria-label="关闭" data-close>×</button>
+      <div class="modal-scroll" id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- 黑白行星：学业与爱好 -->
+  <template id="tpl-self">
+    <div class="planet-view" data-mode="notes" data-theme="self">
+      <p class="pv-kicker">Orbit I · 黑白轨道</p>
+      <h2 class="pv-title" id="modal-title">学业与爱好</h2>
+      <p class="pv-lead">
+        你好，我是 Origineer。目前就读于 <strong>中国人民大学统计学院</strong>，大二在读。
+        统计训练让我习惯用数据和概率去看待世界，而我也一直着迷于那些无法被简单量化的部分，
+        比如人文社科里的叙事与思想，比如一段旋律带来的情绪。
+      </p>
+      <p class="pv-lead">
+        我不太想把兴趣和学业分成两条互不相干的线。数据可以为社会研究提供方法，
+        音乐和游戏的交互设计里也藏着重重的概率与反馈机制。
+      </p>
+
+      <div class="pv-block">
+        <h3 class="pv-sub">学习与经历</h3>
+        <div class="timeline">
+          <article class="tl-item">
+            <span class="tl-dot" aria-hidden="true"></span>
+            <div class="tl-card">
+              <h4>中国人民大学 · 统计学院</h4>
+              <p class="tl-meta">本科在读 · 大二</p>
+              <p>正在系统学习概率论、数理统计与数据分析，以逐步建立起以数据为核心的思考方式。</p>
+            </div>
+          </article>
+          <article class="tl-item">
+            <span class="tl-dot" aria-hidden="true"></span>
+            <div class="tl-card">
+              <h4>人文社科的持续阅读</h4>
+              <p class="tl-meta">课外 · 持续进行</p>
+              <p>在理工课程之外，保持对历史、社会、哲学等领域的阅读兴趣，偶尔尝试用统计的视角去理解社会议题。</p>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <h3 class="pv-sub">兴趣领域</h3>
+        <ul class="tags">
+          <li>人文社科</li><li>投资理财</li><li>音乐</li><li>游戏</li>
+        </ul>
+      </div>
+
+      <div class="pv-block">
+        <h3 class="pv-sub">日常爱好</h3>
+        <div class="hobby-grid">
+          <div class="hobby">
+            <div class="hobby-icon">📚</div>
+            <h4>人文社科</h4>
+            <p>喜欢读历史与社会、脑科学意识科学相关的书，享受在宏大叙事里寻找细微逻辑的过程。</p>
+          </div>
+          <div class="hobby">
+            <div class="hobby-icon">🎵</div>
+            <h4>音乐</h4>
+            <p>耳机常驻。音乐是整理思绪和切换状态最快的方式，也是运动时不可或缺的一环。</p>
+          </div>
+          <div class="hobby">
+            <div class="hobby-icon">🎮</div>
+            <h4>游戏</h4>
+            <p>喜欢有深度系统的游戏，也乐于琢磨相关设定。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 金色行星：投资理财 -->
+  <template id="tpl-finance">
+    <div class="planet-view" data-mode="candles" data-theme="finance">
+      <p class="pv-kicker">Orbit II · 金色轨道</p>
+      <h2 class="pv-title" id="modal-title">投资理财</h2>
+      <p class="pv-lead">
+        从最基础的资产配置与风险管理概念入手，关注概率思维在真实决策中的应用。
+        这门学问关乎如何在不确定性中做决策 —— 它和数据里那些置信区间、期望与方差，
+        说的是同一件事。
+      </p>
+
+      <div class="pv-block">
+        <h3 class="pv-sub">学习与经历</h3>
+        <div class="timeline">
+          <article class="tl-item">
+            <span class="tl-dot" aria-hidden="true"></span>
+            <div class="tl-card">
+              <h4>投资理财 · 初步探索</h4>
+              <p class="tl-meta">感兴趣的方向</p>
+              <p>从最基础的资产配置与风险管理概念入手，关注概率思维在真实决策中的应用。</p>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <h3 class="pv-sub">关注的方向</h3>
+        <ul class="tags">
+          <li>资产配置</li><li>风险管理</li><li>概率思维</li><li>长期主义</li>
+        </ul>
+      </div>
+
+      <div class="pv-block">
+        <h3 class="pv-sub">日常爱好</h3>
+        <div class="hobby-grid">
+          <div class="hobby">
+            <div class="hobby-icon">📈</div>
+            <h4>投资理财</h4>
+            <p>关注市场与资产配置，把课堂上的概率思维带进真实世界的判断。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 蓝紫行星：数据科学 / AI4Science -->
+  <template id="tpl-data">
+    <div class="planet-view" data-mode="dna" data-theme="data">
+      <p class="pv-kicker">Orbit III · 蓝紫轨道</p>
+      <h2 class="pv-title" id="modal-title">数据科学 · AI4Science</h2>
+      <p class="pv-lead">
+        未来我希望在这个方向上深入下去 —— 它关乎如何让模型真正理解自然与科学问题。
+        希望了解机器学习等数据科学的方法如何被用于生命科学等领域的科学研究，
+        成为统计背景与科学问题之间的桥梁。
+      </p>
+
+      <div class="pv-block">
+        <h3 class="pv-sub">学习与经历</h3>
+        <div class="timeline">
+          <article class="tl-item">
+            <span class="tl-dot" aria-hidden="true"></span>
+            <div class="tl-card">
+              <h4>AI for Science · 未来目标</h4>
+              <p class="tl-meta">规划中的方向</p>
+              <p>希望了解机器学习等数据科学的方法如何被用于生命科学等领域科学研究，成为统计背景与科学问题之间的桥梁。</p>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="pv-block">
+        <h3 class="pv-sub">统计与数据</h3>
+        <ul class="tags">
+          <li>概率论</li><li>数理统计</li><li>数据分析</li><li>R</li><li>Python</li>
+        </ul>
+      </div>
+
+      <div class="pv-block">
+        <h3 class="pv-sub">正在学习</h3>
+        <ul class="tags">
+          <li>机器学习</li><li>AI4Science</li><li>生命科学中的建模</li>
+        </ul>
+      </div>
+    </div>
+  </template>
 
   <script src="script.js"></script>
 </body>
