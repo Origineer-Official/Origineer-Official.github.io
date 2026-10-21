@@ -55,6 +55,21 @@
         { x: 0.82, y: 0.58, r: 0.5, c: '16, 74, 96', a: 0.24, sp: 0.011, ph: 2.1 },
         { x: 0.55, y: 0.9, r: 0.46, c: '104, 66, 44', a: 0.2, sp: 0.017, ph: 4.2 }
       ];
+
+      /* 蓝色科幻立方粒子 */
+      this.cubes = Array.from({ length: 24 }, (_, i) => ({
+        x: Math.random(),
+        y: Math.random(),
+        s: 12 + Math.random() * 22,
+        sp: 0.15 + Math.random() * 0.4,
+        ph: Math.random() * TAU,
+        rot: Math.random() * TAU,
+        rotSp: (Math.random() - 0.5) * 0.5,
+        fl: 0.6 + Math.random() * 1.8,
+        depth: 6 + Math.random() * 18,
+        hue: i % 3 === 0 ? '120, 200, 255' : '80, 150, 255'
+      }));
+
       this.resize();
       window.addEventListener('resize', () => this.resize());
       window.addEventListener('pointermove', (e) => {
@@ -127,7 +142,63 @@
         ctx.fill();
       });
 
+      this.drawCubes(t);
       this.drawBokeh(t, true);
+    }
+
+    /* 蓝色线框立方体，缓慢自转并闪烁 */
+    drawCubes(t) {
+      const { ctx, w, h } = this;
+      const EDGES = [
+        [0, 1], [2, 3], [4, 5], [6, 7],
+        [0, 2], [1, 3], [4, 6], [5, 7],
+        [0, 4], [1, 5], [2, 6], [3, 7]
+      ];
+      (this.cubes || []).forEach((c) => {
+        const cx = c.x * w + this.px * c.depth + Math.sin(t * c.sp + c.ph) * 14;
+        const cy = c.y * h + this.py * c.depth + Math.cos(t * c.sp * 1.2 + c.ph) * 12;
+        const flick = 0.25 + 0.75 * Math.abs(Math.sin(t * c.fl + c.ph));
+        const rot = c.rot + t * c.rotSp;
+        const cos = Math.cos(rot);
+        const sin = Math.sin(rot);
+        const pts = [];
+        for (let i = 0; i < 8; i++) {
+          const dx = i & 1 ? c.s : -c.s;
+          const dy = i & 2 ? c.s : -c.s;
+          const dz = i & 4 ? c.s : -c.s;
+          const X = dx * cos - dz * sin;
+          const Z = dx * sin + dz * cos;
+          const k = 1 / (1 + Z / (c.s * 8));
+          pts.push([cx + X * k, cy + dy * k]);
+        }
+        const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, c.s * 2.4);
+        halo.addColorStop(0, `rgba(${c.hue}, ${0.10 * flick})`);
+        halo.addColorStop(1, `rgba(${c.hue}, 0)`);
+        ctx.fillStyle = halo;
+        ctx.beginPath();
+        ctx.arc(cx, cy, c.s * 2.4, 0, TAU);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${c.hue}, ${0.14 * flick})`;
+        ctx.lineWidth = 4;
+        EDGES.forEach(([a, b]) => {
+          ctx.beginPath();
+          ctx.moveTo(pts[a][0], pts[a][1]);
+          ctx.lineTo(pts[b][0], pts[b][1]);
+          ctx.stroke();
+        });
+        ctx.strokeStyle = `rgba(${c.hue}, ${0.62 * flick})`;
+        ctx.lineWidth = 1.2;
+        EDGES.forEach(([a, b]) => {
+          ctx.beginPath();
+          ctx.moveTo(pts[a][0], pts[a][1]);
+          ctx.lineTo(pts[b][0], pts[b][1]);
+          ctx.stroke();
+        });
+        ctx.fillStyle = `rgba(${c.hue}, ${0.5 * flick})`;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 1.9, 0, TAU);
+        ctx.fill();
+      });
     }
 
     /* 星云与远景散景变化很慢，预渲染一次，避免每帧铺满屏幕的渐变 */
@@ -516,7 +587,7 @@
     },
     {
       key: 'self', r: 56, bands: true,
-      lit: '#ffffff', mid: '#e6e4dc', dark: '#6b6b6b', edge: '#141416', glow: '226, 230, 240'
+      lit: '#6a6a72', mid: '#1b1b20', dark: '#08080a', edge: '#000000', glow: '120, 150, 210'
     },
     {
       key: 'finance', r: 42, ring: true,
@@ -878,7 +949,7 @@
           const curve = Math.sin((i / 8) * Math.PI) * r * 0.1;
           ctx.beginPath();
           ctx.ellipse(x, yy, r * 1.05, hgt, 0, 0, TAU);
-          ctx.fillStyle = i % 2 ? 'rgba(8, 8, 10, 0.55)' : 'rgba(255, 255, 255, 0.12)';
+          ctx.fillStyle = i % 2 ? 'rgba(0, 0, 0, 0.7)' : 'rgba(170, 190, 225, 0.10)';
           ctx.fill();
           void curve;
         }
@@ -979,8 +1050,43 @@
     });
     galaxy = new Galaxy(solar, galaxyCanvas, PLANETS);
     galaxy.start();
+    galaxy.paused = true;
     observeSize(solar, () => galaxy.resize());
   }
+
+  /* ===== 整屏翻页 ===== */
+  const deck = document.getElementById('deck');
+  const pages = Array.from(document.querySelectorAll('.page'));
+  let pageIndex = 0;
+
+  function setPage(n) {
+    const next = clamp(n, 0, pages.length - 1);
+    if (next === pageIndex) return;
+    pageIndex = next;
+    pages.forEach((p, i) => {
+      p.classList.toggle('is-active', i === next);
+      p.classList.toggle('is-past', i < next);
+    });
+    if (deck) deck.dataset.page = String(next);
+    if (galaxy) galaxy.paused = next !== 1;
+  }
+
+  pages.forEach((p, i) => {
+    p.classList.toggle('is-active', i === 0);
+    p.classList.toggle('is-past', false);
+  });
+
+  document.querySelectorAll('[data-page]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      setPage(Number(el.dataset.page));
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') setPage(pageIndex + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') setPage(pageIndex - 1);
+  });
 
   /* ===== 6. 弹窗 ===== */
   class PlanetFX {
@@ -1248,8 +1354,23 @@
   const modal = document.getElementById('modal');
   const stage = document.getElementById('modal-stage');
   const content = document.getElementById('modal-content');
-  const fx = new PlanetFX(document.getElementById('modal-fx'));
+  const fxCanvas = document.getElementById('modal-fx');
+  const fx = new PlanetFX(fxCanvas);
   let lastFocus = null;
+
+  /* 弹窗内容滚动时，背景的 DNA / K 线跟着缓慢位移，制造视差 */
+  if (content && fxCanvas) {
+    let fxTick = false;
+    content.addEventListener('scroll', () => {
+      if (fxTick) return;
+      fxTick = true;
+      requestAnimationFrame(() => {
+        const y = content.scrollTop;
+        fxCanvas.style.transform = `translateY(${(-y * 0.16).toFixed(1)}px)`;
+        fxTick = false;
+      });
+    }, { passive: true });
+  }
 
   function openPlanet(key) {
     const tpl = document.getElementById(`tpl-${key}`);
@@ -1259,6 +1380,7 @@
     content.innerHTML = '';
     content.appendChild(tpl.content.cloneNode(true));
     content.scrollTop = 0;
+    if (fxCanvas) fxCanvas.style.transform = 'translateY(0px)';
     stage.dataset.theme = key;
 
     modal.classList.add('open');

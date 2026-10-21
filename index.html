@@ -15,61 +15,52 @@
 
   <!-- 顶部导航 -->
   <header class="nav">
-    <a class="logo" href="#top">Origineer<span class="dot">.</span></a>
+    <a class="logo" href="#" data-page="0">Origineer<span class="dot">.</span></a>
     <nav class="nav-links">
-      <a href="#galaxy">星系</a>
-      <a href="#works">作品</a>
+      <a href="#" data-page="1">星系</a>
+      <a href="#" data-page="2">作品</a>
     </nav>
   </header>
 
-  <main id="top">
-    <!-- ================= 首屏 ================= -->
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="kicker">Portfolio · MMXXV</p>
-        <h1 class="hero-title">
-          <span class="hero-greet">我是</span>
-          <span class="hero-name">Origineer</span>
-        </h1>
-        <p class="hero-sub">
-          统计学院学生 · 人文社科爱好者 · 音乐游戏玩家<br>
-          正在探索 <strong>投资理财</strong> 与 <strong>AI for Science</strong> 的交汇处。
-        </p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#galaxy">进入星系</a>
-          <a class="btn btn-ghost" href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub ↗</a>
+  <main class="deck" id="deck" data-page="0">
+    <!-- ================= 第 1 页：首屏 ================= -->
+    <section class="page page-hero" id="page-hero">
+      <div class="hero">
+        <div class="hero-copy">
+          <p class="kicker">Portfolio · MMXXV</p>
+          <h1 class="hero-title">
+            <span class="hero-greet">我是</span>
+            <span class="hero-name">Origineer</span>
+          </h1>
+          <p class="hero-sub">
+            统计学院学生 · 人文社科爱好者 · 音乐游戏玩家<br>
+            正在探索 <strong>投资理财</strong> 与 <strong>AI for Science</strong> 的交汇处。
+          </p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" type="button" data-page="1">进入星系</button>
+            <a class="btn btn-ghost" href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub ↗</a>
+          </div>
+          <ul class="hero-meta">
+            <li>中国人民大学 · 统计学院</li>
+            <li>大二在读</li>
+            <li>统计 × 人文 × 市场</li>
+          </ul>
         </div>
-        <ul class="hero-meta">
-          <li>中国人民大学 · 统计学院</li>
-          <li>大二在读</li>
-          <li>统计 × 人文 × 市场</li>
-        </ul>
-      </div>
 
-      <!-- 浑天仪时钟（Canvas 绘制） -->
-      <div class="clock-stage" aria-hidden="true">
-        <canvas class="orrery" id="orrery"></canvas>
+        <!-- 浑天仪时钟（Canvas 绘制） -->
+        <div class="clock-stage" aria-hidden="true">
+          <canvas class="orrery" id="orrery"></canvas>
+        </div>
       </div>
-
-      <div class="scroll-cue" aria-hidden="true"><span></span></div>
     </section>
 
-    <!-- ================= 星 系 ================= -->
-    <section id="galaxy" class="galaxy">
-      <header class="galaxy-head">
-        <p class="kicker">The Orbits</p>
-        <h2 class="display">三星与环带</h2>
-        <p class="lede">
-          三颗行星以等边三角形的队形，绕着同一座时钟缓慢旋转；
-          外侧是一条由星尘组成的环带，随引力一起流转。
-        </p>
-      </header>
-
+    <!-- ================= 第 2 页：星系（整屏） ================= -->
+    <section class="page page-galaxy" id="page-galaxy">
       <div class="solar" id="solar">
         <canvas class="galaxy-canvas" id="galaxy-canvas" aria-hidden="true"></canvas>
 
         <button class="planet planet--self" type="button" data-planet="self"
-                aria-label="学业与爱好：黑白行星">
+                aria-label="学业与爱好：黑色行星">
           <span class="planet-label">学业与爱好</span>
         </button>
 
@@ -87,50 +78,52 @@
       <p class="galaxy-hint" aria-hidden="true">轻触行星 · 展开轨道细节</p>
     </section>
 
-    <!-- ================= 作品 ================= -->
-    <section id="works" class="section">
-      <header class="section-head">
-        <p class="kicker">Archive</p>
-        <h2 class="display">作品与项目</h2>
-      </header>
-      <div class="cards">
-        <article class="card">
-          <div class="card-top">
-            <span class="card-badge">Website</span>
-            <span class="card-year">2025</span>
-          </div>
-          <h3>个人主页</h3>
-          <p>这是你正在看的这个网站。纯 HTML / CSS 手写，通过 GitHub Pages 部署发布。</p>
-          <div class="card-tags"><span>HTML</span><span>CSS</span><span>GitHub Pages</span></div>
-        </article>
-        <article class="card card-ghost">
-          <div class="card-top">
-            <span class="card-badge card-badge--soon">In progress</span>
-          </div>
-          <h3>课程与数据分析练习</h3>
-          <p>概率论与数理统计的课程作业，以及一些用 R 和 Python 做的小练习，正在陆续整理。</p>
-          <div class="card-tags"><span>R</span><span>Python</span></div>
-        </article>
-        <article class="card card-ghost">
-          <div class="card-top">
-            <span class="card-badge card-badge--soon">In progress</span>
-          </div>
-          <h3>读书与笔记</h3>
-          <p>人文社科与脑科学、意识科学相关的阅读笔记，之后会挑一些整理出来。</p>
-          <div class="card-tags"><span>阅读</span><span>笔记</span></div>
-        </article>
+    <!-- ================= 第 3 页：作品 ================= -->
+    <section class="page page-works" id="page-works">
+      <div class="works-inner">
+        <header class="section-head">
+          <p class="kicker">Archive</p>
+          <h2 class="display">作品与项目</h2>
+        </header>
+        <div class="cards">
+          <article class="card">
+            <div class="card-top">
+              <span class="card-badge">Website</span>
+              <span class="card-year">2025</span>
+            </div>
+            <h3>个人主页</h3>
+            <p>这是你正在看的这个网站。纯 HTML / CSS 手写，通过 GitHub Pages 部署发布。</p>
+            <div class="card-tags"><span>HTML</span><span>CSS</span><span>GitHub Pages</span></div>
+          </article>
+          <article class="card card-ghost">
+            <div class="card-top">
+              <span class="card-badge card-badge--soon">In progress</span>
+            </div>
+            <h3>课程与数据分析练习</h3>
+            <p>概率论与数理统计的课程作业，以及一些用 R 和 Python 做的小练习，正在陆续整理。</p>
+            <div class="card-tags"><span>R</span><span>Python</span></div>
+          </article>
+          <article class="card card-ghost">
+            <div class="card-top">
+              <span class="card-badge card-badge--soon">In progress</span>
+            </div>
+            <h3>读书与笔记</h3>
+            <p>人文社科与脑科学、意识科学相关的阅读笔记，之后会挑一些整理出来。</p>
+            <div class="card-tags"><span>阅读</span><span>笔记</span></div>
+          </article>
+        </div>
+
+        <footer class="footer">
+          <div class="footer-rule" aria-hidden="true"></div>
+          <p>© <span id="year">2025</span> Origineer · Built with HTML &amp; CSS · Hosted on GitHub Pages</p>
+          <p class="footer-links">
+            <a href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub</a>
+            <a href="#" data-page="0">回到首页</a>
+          </p>
+        </footer>
       </div>
     </section>
   </main>
-
-  <footer class="footer">
-    <div class="footer-rule" aria-hidden="true"></div>
-    <p>© <span id="year">2025</span> Origineer · Built with HTML &amp; CSS · Hosted on GitHub Pages</p>
-    <p class="footer-links">
-      <a href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub</a>
-      <a href="#top">回到顶部</a>
-    </p>
-  </footer>
 
   <!-- ================= 行星详情 ================= -->
   <div class="modal" id="modal" aria-hidden="true">
@@ -143,10 +136,10 @@
     </div>
   </div>
 
-  <!-- 黑白行星：学业与爱好 -->
+  <!-- 黑色行星：学业与爱好 -->
   <template id="tpl-self">
     <div class="planet-view" data-mode="notes" data-theme="self">
-      <p class="pv-kicker">Orbit I · 黑白轨道</p>
+      <p class="pv-kicker">Orbit I · 黑色轨道</p>
       <h2 class="pv-title" id="modal-title">学业与爱好</h2>
       <p class="pv-lead">
         你好，我是 Origineer。目前就读于 <strong>中国人民大学统计学院</strong>，大二在读。
