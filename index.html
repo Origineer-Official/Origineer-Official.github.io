@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Origineer · 个人主页</title>
+  <meta name="description" content="Origineer 的个人主页 —— 中国人民大学统计学院学生，关注人文社科、音乐、游戏，以及投资理财与 AI4Science。">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 背景光晕 -->
+  <div class="aurora" aria-hidden="true">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+    <span class="blob blob-3"></span>
+  </div>
+  <div class="grid-overlay" aria-hidden="true"></div>
+
+  <!-- 顶部导航 -->
+  <header class="nav">
+    <a class="logo" href="#top">Origineer<span class="dot">.</span></a>
+    <nav class="nav-links">
+      <a href="#about">关于</a>
+      <a href="#journey">经历</a>
+      <a href="#skills">技能</a>
+      <a href="#works">作品</a>
+      <a href="#hobbies">兴趣</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- 首屏 -->
+    <section class="hero">
+      <p class="hero-tag">Hello, world</p>
+      <h1 class="hero-title">
+        我是 <span class="gradient">Origineer</span>
+      </h1>
+      <p class="hero-sub">
+        统计学院学生 · 人文社科爱好者 · 音乐与游戏玩家<br>
+        正在探索 <strong>投资理财</strong> 与 <strong>AI for Science</strong> 的交汇处。
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#about">了解我</a>
+        <a class="btn btn-ghost" href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+      <div class="scroll-hint" aria-hidden="true">↓</div>
+    </section>
+
+    <!-- 关于我 -->
+    <section id="about" class="section">
+      <h2 class="section-title"><span class="idx">01</span>关于我</h2>
+      <div class="panel about-panel">
+        <p>
+          你好，我是 Origineer。目前就读于 <strong>中国人民大学统计学院</strong>，大二在读。
+          统计训练让我习惯用数据和概率去看待世界，而我也一直着迷于那些无法被简单量化的部分，
+          比如人文社科里的叙事与思想，比如一段旋律带来的情绪。
+        </p>
+        <p>
+          我不太想把兴趣和学业分成两条互不相干的线。数据可以为社会研究提供方法，
+          音乐和游戏的交互设计里也藏着重重的概率与反馈机制。
+          未来我希望在 <strong>投资理财</strong> 与 <strong>AI4Science</strong> 两个方向上深入下去，
+          前者关乎如何在不确定性中做决策，后者关乎如何让模型真正理解自然与科学问题。
+        </p>
+      </div>
+    </section>
+
+    <!-- 学习与经历 -->
+    <section id="journey" class="section">
+      <h2 class="section-title"><span class="idx">02</span>学习与经历</h2>
+      <div class="timeline">
+        <article class="tl-item">
+          <span class="tl-dot" aria-hidden="true"></span>
+          <div class="tl-card">
+            <h3>中国人民大学 · 统计学院</h3>
+            <p class="tl-meta">本科在读 · 大二</p>
+            <p>系统学习概率论、数理统计与数据分析，逐步建立起以数据为核心的思考方式。</p>
+          </div>
+        </article>
+        <article class="tl-item">
+          <span class="tl-dot" aria-hidden="true"></span>
+          <div class="tl-card">
+            <h3>人文社科的持续阅读</h3>
+            <p class="tl-meta">课外 · 持续进行</p>
+            <p>在理工课程之外，保持对历史、社会、哲学等领域的阅读兴趣，尝试用统计的视角去理解社会议题。</p>
+          </div>
+        </article>
+        <article class="tl-item">
+          <span class="tl-dot" aria-hidden="true"></span>
+          <div class="tl-card">
+            <h3>投资理财 · 初步探索</h3>
+            <p class="tl-meta">感兴趣的方向</p>
+            <p>从最基础的资产配置与风险管理概念入手，关注概率思维在真实决策中的应用。</p>
+          </div>
+        </article>
+        <article class="tl-item">
+          <span class="tl-dot" aria-hidden="true"></span>
+          <div class="tl-card">
+            <h3>AI for Science · 未来目标</h3>
+            <p class="tl-meta">规划中的方向</p>
+            <p>希望了解机器学习如何被用于科学研究，成为统计背景与科学问题之间的桥梁。</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 技能标签 -->
+    <section id="skills" class="section">
+      <h2 class="section-title"><span class="idx">03</span>技能与关注</h2>
+      <div class="skill-groups">
+        <div class="skill-group">
+          <h3>统计与数据</h3>
+          <ul class="tags">
+            <li>概率论</li><li>数理统计</li><li>数据分析</li><li>R</li><li>Python</li>
+          </ul>
+        </div>
+        <div class="skill-group">
+          <h3>正在学习</h3>
+          <ul class="tags">
+            <li>机器学习</li><li>资产配置</li><li>风险管理</li><li>AI4Science</li>
+          </ul>
+        </div>
+        <div class="skill-group">
+          <h3>兴趣领域</h3>
+          <ul class="tags">
+            <li>人文社科</li><li>投资理财</li><li>音乐</li><li>游戏</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 作品 / 项目 -->
+    <section id="works" class="section">
+      <h2 class="section-title"><span class="idx">04</span>作品与项目</h2>
+      <div class="cards">
+        <article class="card">
+          <div class="card-top">
+            <span class="card-badge">Website</span>
+            <span class="card-year">2025</span>
+          </div>
+          <h3>个人主页</h3>
+          <p>你正在看的这个网站。纯 HTML / CSS 手写，通过 GitHub Pages 部署发布。</p>
+          <div class="card-tags"><span>HTML</span><span>CSS</span><span>GitHub Pages</span></div>
+        </article>
+        <article class="card card-ghost">
+          <div class="card-top">
+            <span class="card-badge">Soon</span>
+          </div>
+          <h3>项目占位</h3>
+          <p>这里之后会放你的课程作业、数据分析练习或小项目。修改 <code>index.html</code> 即可替换。</p>
+          <div class="card-tags"><span>待补充</span></div>
+        </article>
+        <article class="card card-ghost">
+          <div class="card-top">
+            <span class="card-badge">Soon</span>
+          </div>
+          <h3>项目占位</h3>
+          <p>另一个占位卡片。作品多了可以复制这一段结构继续添加。</p>
+          <div class="card-tags"><span>待补充</span></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 兴趣爱好 -->
+    <section id="hobbies" class="section">
+      <h2 class="section-title"><span class="idx">05</span>兴趣爱好</h2>
+      <div class="hobby-grid">
+        <div class="hobby">
+          <div class="hobby-icon">📚</div>
+          <h3>人文社科</h3>
+          <p>喜欢读历史与社会相关的书，享受在宏大叙事里寻找细微逻辑的过程。</p>
+        </div>
+        <div class="hobby">
+          <div class="hobby-icon">🎵</div>
+          <h3>音乐</h3>
+          <p>耳机常驻。音乐是整理思绪和切换状态最快的方式。</p>
+        </div>
+        <div class="hobby">
+          <div class="hobby-icon">🎮</div>
+          <h3>游戏</h3>
+          <p>喜欢有深度系统的游戏，也乐于琢磨设计背后的数值与反馈机制。</p>
+        </div>
+        <div class="hobby">
+          <div class="hobby-icon">📈</div>
+          <h3>投资理财</h3>
+          <p>关注市场与资产配置，把课堂上的概率思维带进真实世界的判断。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year">2025</span> Origineer · Built with HTML &amp; CSS · Hosted on GitHub Pages</p>
+    <p class="footer-links">
+      <a href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub</a>
+      <a href="#top">回到顶部</a>
+    </p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
