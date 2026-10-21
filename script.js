@@ -47,9 +47,10 @@
   const starsCv = document.getElementById('stars');
 
   const PLANETS = [
-    { key: 'self', el: document.querySelector('[data-planet="self"]'), a: 0.35, b: 0.18, period: 44, phase: 0.7 },
-    { key: 'finance', el: document.querySelector('[data-planet="finance"]'), a: 0.44, b: 0.22, period: 58, phase: 2.8 },
-    { key: 'data', el: document.querySelector('[data-planet="data"]'), a: 0.27, b: 0.13, period: 32, phase: 4.6 }
+    // a、b 同时递增，保证三条轨道彼此嵌套、不会相交；b 的下限保证行星不会擦过恒星
+    { key: 'data', el: document.querySelector('[data-planet="data"]'), a: 0.27, b: 0.20, period: 38, phase: 4.6 },
+    { key: 'self', el: document.querySelector('[data-planet="self"]'), a: 0.35, b: 0.24, period: 52, phase: 0.7 },
+    { key: 'finance', el: document.querySelector('[data-planet="finance"]'), a: 0.44, b: 0.28, period: 68, phase: 2.8 }
   ];
 
   let starCtx = null;
@@ -87,11 +88,19 @@
 
   function drawOrbits() {
     PLANETS.forEach((p) => {
+      // 外层柔光
       starCtx.beginPath();
       starCtx.ellipse(cx, cy, p.a * W, p.b * H, 0, 0, Math.PI * 2);
-      starCtx.strokeStyle = 'rgba(150, 168, 220, 0.15)';
-      starCtx.lineWidth = 1;
-      starCtx.setLineDash([3, 8]);
+      starCtx.strokeStyle = 'rgba(201, 168, 106, 0.05)';
+      starCtx.lineWidth = 6;
+      starCtx.stroke();
+
+      // 内层细线
+      starCtx.beginPath();
+      starCtx.ellipse(cx, cy, p.a * W, p.b * H, 0, 0, Math.PI * 2);
+      starCtx.strokeStyle = 'rgba(201, 168, 106, 0.2)';
+      starCtx.lineWidth = 0.9;
+      starCtx.setLineDash([2, 9]);
       starCtx.stroke();
       starCtx.setLineDash([]);
     });
@@ -105,7 +114,7 @@
       const alpha = s.a * (0.55 + 0.45 * Math.sin(t * 0.001 * s.sp + s.tw));
       starCtx.beginPath();
       starCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      starCtx.fillStyle = `rgba(206, 222, 255, ${Math.max(alpha, 0.04)})`;
+      starCtx.fillStyle = `rgba(235, 226, 205, ${Math.max(alpha, 0.04)})`;
       starCtx.fill();
     });
   }

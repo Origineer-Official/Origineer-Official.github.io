@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Origineer · 个人主页</title>
   <meta name="description" content="Origineer 的个人主页 —— 中国人民大学统计学院学生，关注人文社科、音乐、游戏，以及 AI4Science 与投资理财。">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='34' fill='none' stroke='%23c9a86a' stroke-width='6'/><circle cx='50' cy='50' r='6' fill='%23c9a86a'/></svg>">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- 背景光晕 -->
+  <!-- 背景层 -->
   <div class="aurora" aria-hidden="true">
     <span class="blob blob-1"></span>
     <span class="blob blob-2"></span>
@@ -27,12 +27,13 @@
   </header>
 
   <main id="top">
-    <!-- ================= 首屏：行走的机械时钟 ================= -->
+    <!-- ================= 首屏 ================= -->
     <section class="hero">
       <div class="hero-copy">
-        <p class="hero-tag">Hello, world</p>
+        <p class="kicker">Portfolio · MMXXV</p>
         <h1 class="hero-title">
-          我是 <span class="gradient">Origineer</span>
+          <span class="hero-greet">我是</span>
+          <span class="hero-name">Origineer</span>
         </h1>
         <p class="hero-sub">
           统计学院学生 · 人文社科爱好者 · 音乐游戏玩家<br>
@@ -42,164 +43,148 @@
           <a class="btn btn-primary" href="#galaxy">进入星系</a>
           <a class="btn btn-ghost" href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub ↗</a>
         </div>
+        <ul class="hero-meta">
+          <li>中国人民大学 · 统计学院</li>
+          <li>大二在读</li>
+          <li>统计 × 人文 × 市场</li>
+        </ul>
       </div>
 
-      <!-- 机械时钟 -->
+      <!-- 悬空机械天文钟 -->
       <div class="clock-stage" aria-hidden="true">
-        <div class="clock-glow"></div>
-        <svg class="walk-clock" viewBox="0 0 640 900" role="presentation" focusable="false">
+        <svg class="astral-clock" viewBox="0 0 720 720" role="presentation" focusable="false">
           <defs>
-            <radialGradient id="caseMetal" cx="34%" cy="26%" r="80%">
-              <stop offset="0%" stop-color="#f9e9c3"/>
-              <stop offset="34%" stop-color="#d9b475"/>
-              <stop offset="70%" stop-color="#9a7439"/>
-              <stop offset="100%" stop-color="#4a3114"/>
+            <radialGradient id="haloGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#c9a86a" stop-opacity=".18"/>
+              <stop offset="42%" stop-color="#8a6a3a" stop-opacity=".08"/>
+              <stop offset="100%" stop-color="#000" stop-opacity="0"/>
             </radialGradient>
-            <radialGradient id="dialFace" cx="42%" cy="30%" r="82%">
-              <stop offset="0%" stop-color="#26304a"/>
-              <stop offset="62%" stop-color="#111726"/>
-              <stop offset="100%" stop-color="#06080f"/>
+            <linearGradient id="brass" x1="8%" y1="4%" x2="96%" y2="98%">
+              <stop offset="0%" stop-color="#f7e8c4"/>
+              <stop offset="22%" stop-color="#dcc08a"/>
+              <stop offset="46%" stop-color="#a5814a"/>
+              <stop offset="62%" stop-color="#e7cf9d"/>
+              <stop offset="82%" stop-color="#b08c52"/>
+              <stop offset="100%" stop-color="#6d5027"/>
+            </linearGradient>
+            <linearGradient id="brassDim" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#e3c790"/>
+              <stop offset="50%" stop-color="#9c7a44"/>
+              <stop offset="100%" stop-color="#5c4420"/>
+            </linearGradient>
+            <radialGradient id="dialGrad" cx="38%" cy="28%" r="86%">
+              <stop offset="0%" stop-color="#1b2230"/>
+              <stop offset="48%" stop-color="#0e1420"/>
+              <stop offset="100%" stop-color="#05070c"/>
             </radialGradient>
-            <linearGradient id="handMetal" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#fff0c9"/>
-              <stop offset="48%" stop-color="#e3c184"/>
-              <stop offset="100%" stop-color="#8c6728"/>
+            <linearGradient id="handGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#fff4d4"/>
+              <stop offset="45%" stop-color="#dcbd85"/>
+              <stop offset="100%" stop-color="#8a6933"/>
             </linearGradient>
-            <linearGradient id="limbMetal" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#d3ae71"/>
-              <stop offset="55%" stop-color="#a07a3c"/>
-              <stop offset="100%" stop-color="#4f3816"/>
+            <linearGradient id="ringStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#c9a86a" stop-opacity="0"/>
+              <stop offset="50%" stop-color="#c9a86a" stop-opacity=".55"/>
+              <stop offset="100%" stop-color="#c9a86a" stop-opacity="0"/>
             </linearGradient>
-            <filter id="clockGlow" x="-45%" y="-45%" width="190%" height="190%">
-              <feGaussianBlur stdDeviation="16" result="b"/>
-              <feMerge>
-                <feMergeNode in="b"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
+            <filter id="caseShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="26" stdDeviation="26" flood-color="#000" flood-opacity=".62"/>
+            </filter>
+            <filter id="handShadow" x="-40%" y="-40%" width="180%" height="180%">
+              <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="#000" flood-opacity=".55"/>
             </filter>
           </defs>
 
-          <ellipse class="clock-shadow" cx="320" cy="758" rx="158" ry="15" fill="#000" opacity=".55"/>
+          <!-- 光晕 -->
+          <circle cx="360" cy="360" r="342" fill="url(#haloGrad)"/>
 
-          <g class="walker">
-            <!-- 左腿：translate 放在外层，动画只作用于内层，避免 CSS transform 覆盖 SVG 位移 -->
-            <g class="leg leg-l" transform="translate(272,512)">
-              <g class="thigh">
-                <rect x="-13" y="-8" width="26" height="120" rx="13" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
-                <g transform="translate(0,110)">
-                  <g class="shin">
-                    <rect x="-11" y="0" width="22" height="106" rx="11" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
-                    <rect class="foot" x="-36" y="98" width="74" height="18" rx="9" fill="#3a2a12" stroke="#c9a468" stroke-width="2"/>
-                  </g>
-                </g>
-              </g>
-            </g>
+          <!-- 黄道环 -->
+          <g class="armillary" fill="none">
+            <ellipse cx="360" cy="360" rx="318" ry="118" transform="rotate(-16 360 360)"
+                     stroke="url(#ringStroke)" stroke-width="1.1"/>
+            <ellipse cx="360" cy="360" rx="300" ry="106" transform="rotate(22 360 360)"
+                     stroke="url(#ringStroke)" stroke-width=".9" opacity=".7"/>
+            <circle cx="360" cy="42" r="2.4" fill="#e8d3a3" opacity=".75"/>
+          </g>
 
-            <!-- 右腿 -->
-            <g class="leg leg-r" transform="translate(368,512)">
-              <g class="thigh">
-                <rect x="-13" y="-8" width="26" height="120" rx="13" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
-                <g transform="translate(0,110)">
-                  <g class="shin">
-                    <rect x="-11" y="0" width="22" height="106" rx="11" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
-                    <rect class="foot" x="-36" y="98" width="74" height="18" rx="9" fill="#3a2a12" stroke="#c9a468" stroke-width="2"/>
-                  </g>
-                </g>
-              </g>
-            </g>
+          <!-- 外圈 -->
+          <circle cx="360" cy="360" r="252" fill="none" stroke="url(#brass)" stroke-width="17" filter="url(#caseShadow)"/>
+          <circle cx="360" cy="360" r="261" fill="none" stroke="#f6e6c2" stroke-opacity=".28" stroke-width="1"/>
+          <circle cx="360" cy="360" r="243.5" fill="none" stroke="#241a08" stroke-opacity=".75" stroke-width="1.4"/>
 
-            <!-- 左臂 -->
-            <g class="arm arm-l" transform="translate(152,455)">
-              <g class="upper-arm">
-                <rect x="-9" y="-6" width="18" height="88" rx="9" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
-                <g transform="translate(0,80)">
-                  <g class="fore-arm">
-                    <rect x="-8" y="0" width="16" height="74" rx="8" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
-                    <circle cx="0" cy="82" r="13" fill="#c9a468" stroke="#241708" stroke-width="2"/>
-                  </g>
-                </g>
-              </g>
-            </g>
+          <!-- 表盘 -->
+          <circle cx="360" cy="360" r="233" fill="url(#dialGrad)"/>
+          <circle cx="360" cy="360" r="233" fill="none" stroke="#c9a86a" stroke-opacity=".16" stroke-width="1"/>
 
-            <!-- 右臂 -->
-            <g class="arm arm-r" transform="translate(488,455)">
-              <g class="upper-arm">
-                <rect x="-9" y="-6" width="18" height="88" rx="9" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
-                <g transform="translate(0,80)">
-                  <g class="fore-arm">
-                    <rect x="-8" y="0" width="16" height="74" rx="8" fill="url(#limbMetal)" stroke="#241708" stroke-width="2"/>
-                    <circle cx="0" cy="82" r="13" fill="#c9a468" stroke="#241708" stroke-width="2"/>
-                  </g>
-                </g>
-              </g>
-            </g>
+          <!-- 内圈刻线 -->
+          <g fill="none" stroke="#e8dcc0">
+            <circle cx="360" cy="360" r="226" stroke-opacity=".1" stroke-width=".8"/>
+            <circle cx="360" cy="360" r="194" stroke-opacity=".07" stroke-width=".8"/>
+            <circle cx="360" cy="360" r="158" stroke-opacity=".06" stroke-width=".8"/>
+            <circle cx="360" cy="360" r="120" stroke-opacity=".05" stroke-width=".8"/>
+            <circle cx="360" cy="360" r="216" stroke-opacity=".38" stroke-width="1.3"
+                    stroke-dasharray="1.6 21.02"/>
+            <circle cx="360" cy="360" r="205" stroke-opacity=".72" stroke-width="4.4"
+                    stroke-dasharray="11 96.86" stroke-linecap="butt"/>
+          </g>
 
-            <!-- 表体 -->
-            <g class="clock-body">
-              <circle cx="320" cy="350" r="203" fill="url(#caseMetal)" stroke="#2a1c09" stroke-width="4"/>
-              <circle cx="320" cy="350" r="203" fill="none" stroke="#ffe9b3" stroke-width="1.5" opacity=".5"/>
-              <circle cx="320" cy="350" r="185" fill="none" stroke="#f7e2b2" stroke-width="2" opacity=".35"/>
-              <circle cx="320" cy="350" r="174" fill="url(#dialFace)"/>
+          <!-- 罗马数字 -->
+          <g font-family="Georgia, 'Times New Roman', serif" font-size="27"
+             fill="#e6d8b8" fill-opacity=".86" text-anchor="middle" dominant-baseline="central"
+             letter-spacing="1">
+            <text x="360" y="184">XII</text>
+            <text x="536" y="360">III</text>
+            <text x="360" y="536">VI</text>
+            <text x="184" y="360">IX</text>
+          </g>
 
-              <!-- 刻度 -->
-              <circle cx="320" cy="350" r="152" fill="none" stroke="#d8c096" stroke-width="2.5"
-                      stroke-dasharray="2.6 13.3" opacity=".55"/>
-              <circle cx="320" cy="350" r="138" fill="none" stroke="#f2ddb0" stroke-width="15"
-                      stroke-dasharray="5.5 66.8" opacity=".9"/>
-
-              <!-- 机芯齿轮 -->
-              <g class="gears" transform="translate(320,350)" opacity=".62">
-                <g class="gear gear-a">
-                  <circle r="47" fill="none" stroke="#96702f" stroke-width="12" stroke-dasharray="7 9"/>
-                  <circle r="35" fill="none" stroke="#b8934e" stroke-width="2"/>
-                  <rect x="-3" y="-35" width="6" height="70" fill="#b8934e"/>
-                  <rect x="-35" y="-3" width="70" height="6" fill="#b8934e"/>
-                  <circle r="8" fill="#d9b475"/>
-                </g>
-                <g transform="translate(62,-36)">
-                  <g class="gear gear-b">
-                    <circle r="27" fill="none" stroke="#8a6628" stroke-width="10" stroke-dasharray="5 8"/>
-                    <circle r="17" fill="none" stroke="#b8934e" stroke-width="2"/>
-                    <circle r="5" fill="#b8934e"/>
-                  </g>
-                </g>
-              </g>
-
-              <!-- 指针 -->
-              <g class="hands" transform="translate(320,350)">
-                <g class="hand hand-hour">
-                  <rect x="-6.5" y="-112" width="13" height="112" rx="6.5" fill="url(#handMetal)"/>
-                </g>
-                <g class="hand hand-minute">
-                  <rect x="-4.5" y="-160" width="9" height="160" rx="4.5" fill="url(#handMetal)"/>
-                </g>
-                <g class="hand hand-second">
-                  <rect x="-1.6" y="-160" width="3.2" height="180" rx="1.6" fill="#ff6ec7"/>
-                  <circle cx="0" cy="26" r="6.5" fill="#ff6ec7"/>
-                </g>
-                <circle r="13" fill="#2a1c09" stroke="#e3c184" stroke-width="2"/>
-                <circle r="4.5" fill="#ffe9b3"/>
-              </g>
+          <!-- 小秒盘 -->
+          <g class="subdial">
+            <circle cx="360" cy="468" r="46" fill="#05070c" fill-opacity=".55"
+                    stroke="#c9a86a" stroke-opacity=".26" stroke-width="1"/>
+            <circle cx="360" cy="468" r="41" fill="none" stroke="#e8dcc0" stroke-opacity=".22"
+                    stroke-width="1.2" stroke-dasharray="1.2 8.4"/>
+            <g class="sub-hand" fill="#e2b184">
+              <rect x="359.1" y="428" width="1.8" height="42" rx=".9"/>
+              <circle cx="360" cy="468" r="2.4"/>
             </g>
           </g>
+
+          <!-- 指针 -->
+          <g filter="url(#handShadow)">
+            <path class="hand hand-hour" fill="url(#handGrad)"
+                  d="M357.4 374 L352.6 360 L357.2 248 L360 240 L362.8 248 L367.4 360 L362.6 374 Z"/>
+            <path class="hand hand-minute" fill="url(#handGrad)"
+                  d="M358.4 380 L353.4 360 L358.2 186 L360 178 L361.8 186 L366.6 360 L361.6 380 Z"/>
+          </g>
+
+          <!-- 中心轴 -->
+          <circle cx="360" cy="360" r="11.5" fill="url(#brassDim)"/>
+          <circle cx="360" cy="360" r="5" fill="#100c05"/>
+          <circle cx="360" cy="360" r="1.8" fill="#f0dcb2"/>
         </svg>
       </div>
 
-      <div class="scroll-hint" aria-hidden="true">↓</div>
+      <div class="scroll-cue" aria-hidden="true"><span></span></div>
     </section>
 
     <!-- ================= 星 系 ================= -->
     <section id="galaxy" class="galaxy">
       <header class="galaxy-head">
-        <h2 class="section-title"><span class="idx">01</span>三条轨道</h2>
-        <p class="galaxy-sub">
+        <p class="kicker">The Orbits</p>
+        <h2 class="display">三条轨道</h2>
+        <p class="lede">
           一颗颗行星沿着各自的轨道运行，彼此并不相交，却共享同一片引力。
         </p>
       </header>
 
       <div class="solar" id="solar">
         <canvas class="stars" id="stars" aria-hidden="true"></canvas>
+
         <div class="sun" aria-hidden="true">
+          <span class="sun-halo"></span>
+          <span class="sun-rays"></span>
+          <span class="sun-flare"></span>
           <span class="sun-core"></span>
           <span class="sun-ring"></span>
         </div>
@@ -228,7 +213,10 @@
 
     <!-- ================= 作品 ================= -->
     <section id="works" class="section">
-      <h2 class="section-title"><span class="idx">02</span>作品与项目</h2>
+      <header class="section-head">
+        <p class="kicker">Archive</p>
+        <h2 class="display">作品与项目</h2>
+      </header>
       <div class="cards">
         <article class="card">
           <div class="card-top">
@@ -260,6 +248,7 @@
   </main>
 
   <footer class="footer">
+    <div class="footer-rule" aria-hidden="true"></div>
     <p>© <span id="year">2025</span> Origineer · Built with HTML &amp; CSS · Hosted on GitHub Pages</p>
     <p class="footer-links">
       <a href="https://github.com/Origineer-Official" target="_blank" rel="noopener">GitHub</a>
