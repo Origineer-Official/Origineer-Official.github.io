@@ -14,9 +14,9 @@
   const TAU = Math.PI * 2;
 
   /* ===== 1. 工具 ===== */
-  function setupCanvas(canvas) {
+  function setupCanvas(canvas, maxDpr) {
     const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, maxDpr || 2);
     const w = Math.max(1, rect.width);
     const h = Math.max(1, rect.height);
     canvas.width = Math.round(w * dpr);
@@ -97,6 +97,7 @@
           near
         };
       });
+      this.buildBackground();
       if (reduceMotion) this.render(2);
     }
 
@@ -116,19 +117,7 @@
       this.py += (this.ty - this.py) * 0.035;
 
       ctx.clearRect(0, 0, w, h);
-
-      this.neb.forEach((n) => {
-        const x = w * n.x + Math.sin(t * n.sp + n.ph) * w * 0.015 + this.px * 12;
-        const y = h * n.y + Math.cos(t * n.sp * 1.2 + n.ph) * h * 0.015 + this.py * 12;
-        const rg = ctx.createRadialGradient(x, y, 0, x, y, Math.min(w, h) * n.r);
-        rg.addColorStop(0, `rgba(${n.c}, ${n.a * 0.9})`);
-        rg.addColorStop(0.45, `rgba(${n.c}, ${n.a * 0.34})`);
-        rg.addColorStop(1, `rgba(${n.c}, 0)`);
-        ctx.fillStyle = rg;
-        ctx.fillRect(0, 0, w, h);
-      });
-
-      this.drawBokeh(t, false);
+      if (this.bg) ctx.drawImage(this.bg, 0, 0, w, h);
 
       this.stars.forEach((s) => {
         const a = s.a * (0.5 + 0.5 * Math.sin(t * s.sp + s.tw));
@@ -139,6 +128,45 @@
       });
 
       this.drawBokeh(t, true);
+    }
+
+    /* 星云与远景散景变化很慢，预渲染一次，避免每帧铺满屏幕的渐变 */
+    buildBackground() {
+      const { w, h } = this;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const c = document.createElement('canvas');
+      c.width = Math.round(w * dpr);
+      c.height = Math.round(h * dpr);
+      const x = c.getContext('2d');
+      x.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      this.neb.forEach((n) => {
+        const px = w * n.x;
+        const py = h * n.y;
+        const rg = x.createRadialGradient(px, py, 0, px, py, Math.min(w, h) * n.r);
+        rg.addColorStop(0, `rgba(${n.c}, ${n.a * 0.9})`);
+        rg.addColorStop(0.45, `rgba(${n.c}, ${n.a * 0.34})`);
+        rg.addColorStop(1, `rgba(${n.c}, 0)`);
+        x.fillStyle = rg;
+        x.fillRect(0, 0, w, h);
+      });
+
+      (this.bokeh || []).forEach((b) => {
+        if (b.near) return;
+        const R = Math.min(w, h) * b.r;
+        const px = b.x * w;
+        const py = b.y * h;
+        const g = x.createRadialGradient(px, py, 0, px, py, R);
+        g.addColorStop(0, `rgba(${b.hue}, ${b.a})`);
+        g.addColorStop(0.55, `rgba(${b.hue}, ${b.a * 0.45})`);
+        g.addColorStop(1, `rgba(${b.hue}, 0)`);
+        x.fillStyle = g;
+        x.beginPath();
+        x.arc(px, py, R, 0, TAU);
+        x.fill();
+      });
+
+      this.bg = c;
     }
 
     drawBokeh(t, near) {
@@ -200,7 +228,8 @@
     const o = opts || {};
     const px = o.px || 0;
     const py = o.py || 0;
-    const drawBg = o.bg !== false;
+    const drawBg = o.bg === true;
+    const cheap = !!o.cheap;
 
     const cx = w / 2 + px * 16;
     const cy = h / 2 + Math.sin(t * 0.45) * 5 + py * 16;
@@ -229,7 +258,8 @@
     strokeRing(ctx, P, t, true);
 
     /* 光尘 */
-    DUST.forEach((d) => {
+    if (!cheap) {
+      DUST.forEach((d) => {
       const ang = d.a + t * d.s * 0.12;
       const rad = d.r * Math.min(w, h) * 0.48;
       const x = cx + Math.cos(ang) * rad;
@@ -239,14 +269,15 @@
       ctx.arc(x, y, 1.1 + d.r * 1.2, 0, TAU);
       ctx.fillStyle = `rgba(236, 219, 186, ${0.1 + tw * 0.18})`;
       ctx.fill();
-    });
+      });
+    }
 
     function strokeRing(c, P2, time, front) {
       RINGS.forEach((ring, idx) => {
         const spin = time * ring.speed + idx;
         c.beginPath();
         let pen = false;
-        const N = 180;
+        const N = cheap ? 108 : 168;
         for (let i = 0; i <= N; i++) {
           const th = (i / N) * TAU;
           const p = ringPoint(ring.r, th, ring.tx, ring.tz + spin);
@@ -257,17 +288,20 @@
           else c.lineTo(pts[0], pts[1]);
         }
         if (front) {
-          c.strokeStyle = 'rgba(242, 222, 188, 0.62)';
-          c.lineWidth = 1.15;
-          c.shadowColor = 'rgba(214, 178, 112, 0.5)';
-          c.shadowBlur = 16;
+          /* 不用 shadowBlur（很贵），改用两层描边模拟辉光 */
+          c.strokeStyle = 'rgba(214, 178, 112, 0.10)';
+          c.lineWidth = 4.5;
+          c.stroke();
+          c.strokeStyle = 'rgba(246, 230, 200, 0.72)';
+          c.lineWidth = 1.1;
+          c.stroke();
         } else {
-          c.strokeStyle = 'rgba(196, 163, 104, 0.14)';
+          c.strokeStyle = 'rgba(196, 163, 104, 0.13)';
           c.lineWidth = 0.9;
-          c.shadowBlur = 0;
+          c.stroke();
         }
-        c.stroke();
-        c.shadowBlur = 0;
+
+        if (cheap) return;
 
         ring.beads.forEach((offset) => {
           const th = time * ring.speed * 1.4 + offset;
@@ -282,17 +316,15 @@
           c.beginPath();
           c.arc(pts[0], pts[1], r, 0, TAU);
           c.fillStyle = g;
-          c.shadowColor = 'rgba(240, 200, 130, 0.8)';
-          c.shadowBlur = 12;
           c.fill();
-          c.shadowBlur = 0;
         });
       });
     }
 
     function drawDial(c, cx2, cy2, zoom2, ax2, time) {
-      const tiltX = 0.3 + Math.sin(time * 0.4) * 0.015;
-      const P2 = (p) => projectPoint(p, cx2, cy2, zoom2, ax2, 0);
+      /* 表盘基本正对镜头：只留极小的倾斜，保证看上去是正圆 */
+      const tiltX = 0.1 + Math.sin(time * 0.4) * 0.008;
+      const P2 = (p) => projectPoint(p, cx2, cy2, zoom2, 0, 0);
 
       const dp = (r, th) => {
         const x0 = Math.cos(th) * r;
@@ -347,9 +379,19 @@
       c.lineWidth = 1;
       c.stroke();
 
-      /* 外沿 */
-      c.strokeStyle = 'rgba(232, 208, 160, 0.75)';
-      c.lineWidth = 1.6;
+      /* 外沿：先一圈柔光，再一圈实边，让表盘从背景里浮出来 */
+      c.beginPath();
+      for (let i = 0; i <= 120; i++) {
+        const pts = P2(dp(R * 1.06, (i / 120) * TAU));
+        i === 0 ? c.moveTo(pts[0], pts[1]) : c.lineTo(pts[0], pts[1]);
+      }
+      c.closePath();
+      c.strokeStyle = 'rgba(214, 178, 112, 0.16)';
+      c.lineWidth = 7;
+      c.stroke();
+
+      c.strokeStyle = 'rgba(244, 226, 190, 0.9)';
+      c.lineWidth = 2.2;
       c.stroke();
 
       /* 刻度 */
@@ -438,7 +480,7 @@
     }
 
     resize() {
-      const { ctx, w, h } = setupCanvas(this.canvas);
+      const { ctx, w, h } = setupCanvas(this.canvas, 1.5);
       this.ctx = ctx;
       this.w = w;
       this.h = h;
@@ -494,22 +536,43 @@
       this.nebula = [];
       this.belt = [];
       this.paused = false;
+      this.bg = null;
+
+      /* 每颗行星的表面斑块，构造时固定，避免逐帧闪烁 */
+      planets.forEach((p) => {
+        p.patches = Array.from({ length: 7 }, () => ({
+          a: Math.random() * TAU,
+          d: 0.2 + Math.random() * 0.62,
+          s: 0.12 + Math.random() * 0.22,
+          al: 0.04 + Math.random() * 0.08
+        }));
+      });
+
       this.resize();
     }
 
     resize() {
-      const { ctx, w, h } = setupCanvas(this.canvas);
+      const { ctx, w, h } = setupCanvas(this.canvas, 1.75);
       this.ctx = ctx;
       this.w = w;
       this.h = h;
       this.fit = clamp(w / 1080, 0.62, 1.1);
+      this.cx = w / 2;
+      this.cy = h / 2;
+
+      const RATIO = 0.96;
+      const tiltK = Math.abs(Math.cos(TILT)) + RATIO * Math.abs(Math.sin(TILT));
+      this.A = Math.min((h * 0.42) / RATIO, (w * 0.5 - 58) / tiltK);
+      this.B = this.A * RATIO;
+
       this.seed();
+      this.buildBackground();
       if (reduceMotion) this.render(3);
     }
 
     seed() {
       const { w, h } = this;
-      const count = Math.max(80, Math.round((w * h) / 8000));
+      const count = Math.max(80, Math.round((w * h) / 9000));
       this.stars = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
@@ -520,26 +583,130 @@
       }));
 
       this.nebula = [
-        { x: 0.28, y: 0.3, r: 0.46, c: '92, 74, 176', a: 0.15, sp: 0.05, ph: 0 },
-        { x: 0.74, y: 0.66, r: 0.42, c: '24, 94, 112', a: 0.11, sp: 0.04, ph: 1.8 }
+        { x: 0.28, y: 0.3, r: 0.5, c: '92, 74, 176', a: 0.16 },
+        { x: 0.74, y: 0.66, r: 0.46, c: '24, 94, 112', a: 0.12 }
       ];
 
       /* 星尘环带：主带 + 两道稀疏外带 */
-      const palette = ['236, 226, 204', '240, 205, 138', '176, 158, 255', '214, 190, 150'];
-      this.belt = Array.from({ length: 340 }, (_, i) => {
-        const outer = i > 236;
-        const far = i > 300;
+      const palette = ['238, 228, 206', '244, 210, 146', '182, 164, 255', '220, 196, 156'];
+      this.belt = Array.from({ length: 420 }, (_, i) => {
+        const outer = i > 300;
+        const far = i > 380;
         return {
           ang: Math.random() * TAU,
           rad: outer
-            ? (far ? 1.32 + Math.random() * 0.26 : 1.16 + Math.random() * 0.12)
-            : 0.985 + Math.random() * 0.17,
-          size: 0.6 + Math.random() * 1.9,
-          alpha: 0.12 + Math.random() * 0.5,
+            ? (far ? 1.3 + Math.random() * 0.28 : 1.14 + Math.random() * 0.12)
+            : 0.975 + Math.random() * 0.19,
+          size: 0.6 + Math.random() * 2.1,
+          alpha: 0.14 + Math.random() * 0.55,
           color: palette[Math.floor(Math.random() * palette.length)],
           speed: 0.05 + (Math.random() - 0.5) * 0.02
         };
       });
+    }
+
+    /* 星云、银河带、静态星点、轨道线 → 预渲染到离屏画布 */
+    buildBackground() {
+      const { w, h, cx, cy, A, B } = this;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const c = document.createElement('canvas');
+      c.width = Math.round(w * dpr);
+      c.height = Math.round(h * dpr);
+      const x = c.getContext('2d');
+      x.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      /* 星云 */
+      this.nebula.forEach((n) => {
+        const px = w * n.x;
+        const py = h * n.y;
+        const rg = x.createRadialGradient(px, py, 0, px, py, Math.min(w, h) * n.r);
+        rg.addColorStop(0, `rgba(${n.c}, ${n.a})`);
+        rg.addColorStop(0.55, `rgba(${n.c}, ${n.a * 0.35})`);
+        rg.addColorStop(1, `rgba(${n.c}, 0)`);
+        x.fillStyle = rg;
+        x.fillRect(0, 0, w, h);
+      });
+
+      /* 银河带：沿轨道平面的一条亮带 */
+      x.save();
+      x.translate(cx, cy);
+      x.rotate(TILT);
+      const band = x.createLinearGradient(-A * 1.45, 0, A * 1.45, 0);
+      band.addColorStop(0, 'rgba(150, 140, 210, 0)');
+      band.addColorStop(0.22, 'rgba(176, 160, 220, 0.1)');
+      band.addColorStop(0.5, 'rgba(244, 222, 184, 0.18)');
+      band.addColorStop(0.78, 'rgba(176, 160, 220, 0.1)');
+      band.addColorStop(1, 'rgba(150, 140, 210, 0)');
+      x.fillStyle = band;
+      x.beginPath();
+      x.ellipse(0, 0, A * 1.55, B * 1.5, 0, 0, TAU);
+      x.fill();
+      x.restore();
+
+      /* 银河颗粒：沿椭圆密集分布的小星，垂直方向散开 */
+      const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
+      for (let i = 0; i < 1600; i++) {
+        const ang = Math.random() * TAU;
+        const rad = 0.52 + Math.random() * 0.92;
+        const pts = this.orbit(ang, A * rad, B * rad, cx, cy);
+        const px = pts[0];
+        const py = pts[1] + gauss() * 20;
+        const size = 0.3 + Math.random() * 1.1;
+        const a = 0.05 + Math.random() * 0.35;
+        x.beginPath();
+        x.arc(px, py, size, 0, TAU);
+        x.fillStyle = Math.random() > 0.72
+          ? `rgba(238, 216, 180, ${a})`
+          : `rgba(214, 218, 255, ${a})`;
+        x.fill();
+      }
+
+      /* 少量亮星，带十字光芒 */
+      for (let i = 0; i < 26; i++) {
+        const ang = Math.random() * TAU;
+        const rad = 0.5 + Math.random() * 0.9;
+        const pts = this.orbit(ang, A * rad, B * rad, cx, cy);
+        const px = pts[0];
+        const py = pts[1] + gauss() * 24;
+        const r = 0.9 + Math.random() * 1.1;
+        x.beginPath();
+        x.arc(px, py, r, 0, TAU);
+        x.fillStyle = 'rgba(255, 248, 232, 0.85)';
+        x.fill();
+        x.strokeStyle = 'rgba(255, 240, 210, 0.30)';
+        x.lineWidth = 0.8;
+        x.beginPath();
+        x.moveTo(px - r * 4, py);
+        x.lineTo(px + r * 4, py);
+        x.moveTo(px, py - r * 4);
+        x.lineTo(px, py + r * 4);
+        x.stroke();
+      }
+
+      /* 静态星点 */
+      this.stars.forEach((s) => {
+        x.beginPath();
+        x.arc(s.x, s.y, s.r, 0, TAU);
+        x.fillStyle = `rgba(236, 228, 210, ${s.a * 0.55})`;
+        x.fill();
+      });
+
+      /* 轨道线 */
+      [0.72, 1, 1.22, 1.44].forEach((k) => {
+        x.beginPath();
+        for (let i = 0; i <= 150; i++) {
+          const pts = this.orbit((i / 150) * TAU, A * k, B * k, cx, cy);
+          i === 0 ? x.moveTo(pts[0], pts[1]) : x.lineTo(pts[0], pts[1]);
+        }
+        x.closePath();
+        x.strokeStyle = k === 1 ? 'rgba(226, 190, 128, 0.16)' : 'rgba(226, 190, 128, 0.06)';
+        x.lineWidth = k === 1 ? 1 : 0.8;
+        x.setLineDash(k === 1 ? [] : [2, 10]);
+        x.stroke();
+        x.setLineDash([]);
+      });
+
+      this.bg = c;
     }
 
     start() {
@@ -560,60 +727,13 @@
     }
 
     render(t) {
-      const { ctx, w, h } = this;
+      const { ctx, w, h, cx, cy, A, B } = this;
       if (!w || !h) return;
-      const cx = w / 2;
-      const cy = h / 2;
-
-      /* 轨道接近圆（0.96），保证三颗行星在屏幕上接近等边三角；
-         A 同时受高度、宽度与倾斜后的横向投影限制，避免行星被画布裁掉 */
-      const RATIO = 0.96;
-      const tiltK = Math.abs(Math.cos(TILT)) + RATIO * Math.abs(Math.sin(TILT));
-      const A = Math.min((h * 0.42) / RATIO, (w * 0.5 - 58) / tiltK);
-      const B = A * RATIO;
 
       ctx.clearRect(0, 0, w, h);
+      if (this.bg) ctx.drawImage(this.bg, 0, 0, w, h);
 
-      /* 星云 */
-      this.nebula.forEach((n) => {
-        const x = w * n.x + Math.sin(t * n.sp + n.ph) * w * 0.02;
-        const y = h * n.y + Math.cos(t * n.sp * 1.3 + n.ph) * h * 0.02;
-        const rg = ctx.createRadialGradient(x, y, 0, x, y, Math.min(w, h) * n.r);
-        rg.addColorStop(0, `rgba(${n.c}, ${n.a})`);
-        rg.addColorStop(0.55, `rgba(${n.c}, ${n.a * 0.35})`);
-        rg.addColorStop(1, `rgba(${n.c}, 0)`);
-        ctx.fillStyle = rg;
-        ctx.fillRect(0, 0, w, h);
-      });
-
-      /* 星点 */
-      this.stars.forEach((s) => {
-        const a = s.a * (0.55 + 0.45 * Math.sin(t * s.sp + s.tw));
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, TAU);
-        ctx.fillStyle = `rgba(236, 228, 210, ${Math.max(a, 0.05)})`;
-        ctx.fill();
-      });
-
-      /* 银河般的环带辉光 */
-      this.drawBand(ctx, cx, cy, A, t);
-
-      /* 轨道线 */
-      [0.72, 1, 1.22, 1.44].forEach((k) => {
-        ctx.beginPath();
-        for (let i = 0; i <= 140; i++) {
-          const pts = this.orbit((i / 140) * TAU, A * k, B * k, cx, cy);
-          i === 0 ? ctx.moveTo(pts[0], pts[1]) : ctx.lineTo(pts[0], pts[1]);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = k === 1 ? 'rgba(214, 178, 112, 0.13)' : 'rgba(214, 178, 112, 0.055)';
-        ctx.lineWidth = k === 1 ? 1 : 0.8;
-        ctx.setLineDash(k === 1 ? [] : [2, 10]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      });
-
-      /* 星尘 */
+      /* 星尘（远侧） */
       this.drawBelt(ctx, cx, cy, A, B, t, false);
 
       /* 行星位置：等边三角 */
@@ -624,7 +744,6 @@
         return { p, ang, x: pts[0], y: pts[1], z: Math.sin(ang) };
       });
 
-      /* 远侧行星 */
       objs.filter((o) => o.z < 0).sort((m, n) => m.z - n.z)
         .forEach((o) => this.drawPlanet(ctx, o, cx, cy, A, B));
 
@@ -632,14 +751,13 @@
       const clockSize = Math.min(w * 0.4, h * 0.52);
       ctx.save();
       ctx.translate(cx - clockSize / 2, cy - clockSize / 2);
-      drawOrrery(ctx, clockSize, clockSize, t, { bg: false });
+      drawOrrery(ctx, clockSize, clockSize, t, { bg: false, cheap: true });
       ctx.restore();
 
-      /* 近侧行星 */
       objs.filter((o) => o.z >= 0).sort((m, n) => m.z - n.z)
         .forEach((o) => this.drawPlanet(ctx, o, cx, cy, A, B));
 
-      /* 近侧星尘（压在最前，增强层次） */
+      /* 星尘（近侧） */
       this.drawBelt(ctx, cx, cy, A, B, t, true);
 
       /* 同步 DOM 按钮 */
@@ -651,34 +769,15 @@
       });
     }
 
-    drawBand(ctx, cx, cy, A, t) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(TILT);
-      ctx.scale(1, 0.9);
-      const g = ctx.createRadialGradient(0, 0, A * 0.5, 0, 0, A * 1.5);
-      g.addColorStop(0, 'rgba(180, 150, 220, 0)');
-      g.addColorStop(0.45, 'rgba(170, 150, 210, 0.05)');
-      g.addColorStop(0.72, 'rgba(226, 200, 160, 0.09)');
-      g.addColorStop(0.9, 'rgba(226, 200, 160, 0.04)');
-      g.addColorStop(1, 'rgba(226, 200, 160, 0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(0, 0, A * 1.5, 0, TAU);
-      ctx.fill();
-      ctx.restore();
-    }
-
     drawBelt(ctx, cx, cy, A, B, t, front) {
       this.belt.forEach((b) => {
         const ang = b.ang + t * b.speed;
         const z = Math.sin(ang);
-        const isFront = z >= 0;
-        if (isFront !== front) return;
+        if ((z >= 0) !== front) return;
         const pts = this.orbit(ang, A * b.rad, B * b.rad, cx, cy);
         const depth = (z + 1) / 2;
-        const size = b.size * (0.7 + 0.6 * depth);
-        const alpha = b.alpha * (0.45 + 0.55 * depth);
+        const size = b.size * (0.65 + 0.65 * depth);
+        const alpha = b.alpha * (0.42 + 0.58 * depth);
         ctx.beginPath();
         ctx.arc(pts[0], pts[1], size, 0, TAU);
         ctx.fillStyle = `rgba(${b.color}, ${alpha})`;
@@ -689,31 +788,31 @@
     drawPlanet(ctx, o, cx, cy, A, B) {
       const { p, x, y, z } = o;
       const depth = (z + 1) / 2;
-      const r = p.r * this.fit * (0.82 + 0.22 * depth);
-      const alpha = 0.7 + 0.3 * depth;
+      const r = p.r * this.fit * (0.82 + 0.24 * depth);
+      const alpha = 0.72 + 0.28 * depth;
 
       /* 拖尾 */
-      for (let i = 0; i < 4; i++) {
-        const a0 = o.ang - (i + 1) * 0.045;
-        const a1 = o.ang - i * 0.045;
+      for (let i = 0; i < 5; i++) {
+        const a0 = o.ang - (i + 1) * 0.04;
+        const a1 = o.ang - i * 0.04;
         const pa = this.orbit(a0, A, B, cx, cy);
         const pb = this.orbit(a1, A, B, cx, cy);
         ctx.beginPath();
         ctx.moveTo(pa[0], pa[1]);
         ctx.lineTo(pb[0], pb[1]);
-        ctx.strokeStyle = `rgba(${p.glow}, ${0.18 - i * 0.04})`;
-        ctx.lineWidth = 2.6 - i * 0.5;
+        ctx.strokeStyle = `rgba(${p.glow}, ${0.2 - i * 0.035})`;
+        ctx.lineWidth = 3 - i * 0.35;
         ctx.lineCap = 'round';
         ctx.stroke();
       }
 
-      /* 大气 */
-      const halo = ctx.createRadialGradient(x, y, r * 0.9, x, y, r * 1.65);
-      halo.addColorStop(0, `rgba(${p.glow}, ${0.32 * alpha})`);
-      halo.addColorStop(0.55, `rgba(${p.glow}, ${0.1 * alpha})`);
+      /* 大气光晕 */
+      const halo = ctx.createRadialGradient(x, y, r * 0.92, x, y, r * 1.75);
+      halo.addColorStop(0, `rgba(${p.glow}, ${0.34 * alpha})`);
+      halo.addColorStop(0.5, `rgba(${p.glow}, ${0.12 * alpha})`);
       halo.addColorStop(1, `rgba(${p.glow}, 0)`);
       ctx.beginPath();
-      ctx.arc(x, y, r * 1.65, 0, TAU);
+      ctx.arc(x, y, r * 1.75, 0, TAU);
       ctx.fillStyle = halo;
       ctx.fill();
 
@@ -723,10 +822,11 @@
       const lx = Math.cos(sunAng);
       const ly = Math.sin(sunAng);
 
-      const g = ctx.createRadialGradient(x + lx * r * 0.42, y + ly * r * 0.42, r * 0.04, x, y, r * 1.02);
+      /* 球体基底 */
+      const g = ctx.createRadialGradient(x + lx * r * 0.55, y + ly * r * 0.55, r * 0.02, x, y, r * 1.04);
       g.addColorStop(0, p.lit);
-      g.addColorStop(0.36, p.mid);
-      g.addColorStop(0.72, p.dark);
+      g.addColorStop(0.28, p.mid);
+      g.addColorStop(0.66, p.dark);
       g.addColorStop(1, p.edge);
       ctx.globalAlpha = alpha;
       ctx.beginPath();
@@ -738,27 +838,68 @@
       ctx.beginPath();
       ctx.arc(x, y, r, 0, TAU);
       ctx.clip();
-      const sh = ctx.createRadialGradient(x - lx * r * 0.55, y - ly * r * 0.55, r * 0.05,
-        x - lx * r * 0.1, y - ly * r * 0.1, r * 1.3);
-      sh.addColorStop(0, 'rgba(0, 0, 0, 0.78)');
-      sh.addColorStop(0.5, 'rgba(0, 0, 0, 0.3)');
-      sh.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = sh;
+
+      /* 终结线：从背光侧压暗 */
+      const shade = ctx.createRadialGradient(x - lx * r * 0.75, y - ly * r * 0.75, r * 0.1,
+        x - lx * r * 0.18, y - ly * r * 0.18, r * 1.55);
+      shade.addColorStop(0, 'rgba(0, 0, 0, 0.88)');
+      shade.addColorStop(0.42, 'rgba(0, 0, 0, 0.5)');
+      shade.addColorStop(0.72, 'rgba(0, 0, 0, 0.16)');
+      shade.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = shade;
       ctx.fillRect(x - r, y - r, r * 2, r * 2);
 
+      /* 边缘变暗，强化球感 */
+      const limb = ctx.createRadialGradient(x, y, r * 0.58, x, y, r);
+      limb.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      limb.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
+      ctx.fillStyle = limb;
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+
+      /* 表面斑块 */
+      p.patches.forEach((pt) => {
+        const px = x + Math.cos(pt.a) * r * pt.d;
+        const py = y + Math.sin(pt.a) * r * pt.d;
+        const pr = r * pt.s;
+        const pg = ctx.createRadialGradient(px, py, 0, px, py, pr);
+        pg.addColorStop(0, `rgba(255, 255, 255, ${pt.al})`);
+        pg.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = pg;
+        ctx.beginPath();
+        ctx.arc(px, py, pr, 0, TAU);
+        ctx.fill();
+      });
+
+      /* 黑白行星的条带 */
       if (p.bands) {
-        for (let i = 0; i < 7; i++) {
-          const yy = y - r + (i + 0.5) * (r * 2 / 7);
-          ctx.fillStyle = i % 2 ? 'rgba(10, 10, 12, 0.5)' : 'rgba(255, 255, 255, 0.1)';
-          ctx.fillRect(x - r, yy, r * 2, r * 0.13);
+        for (let i = 0; i < 8; i++) {
+          const yy = y - r + (i + 0.5) * (r * 2 / 8);
+          const hgt = r * 0.12;
+          const curve = Math.sin((i / 8) * Math.PI) * r * 0.1;
+          ctx.beginPath();
+          ctx.ellipse(x, yy, r * 1.05, hgt, 0, 0, TAU);
+          ctx.fillStyle = i % 2 ? 'rgba(8, 8, 10, 0.55)' : 'rgba(255, 255, 255, 0.12)';
+          ctx.fill();
+          void curve;
         }
       }
+
+      /* 高光 */
+      const spec = ctx.createRadialGradient(x + lx * r * 0.42, y + ly * r * 0.42, 0,
+        x + lx * r * 0.42, y + ly * r * 0.42, r * 0.55);
+      spec.addColorStop(0, `rgba(255, 255, 255, ${0.42 * alpha})`);
+      spec.addColorStop(0.4, `rgba(255, 255, 255, ${0.12 * alpha})`);
+      spec.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = spec;
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+
       ctx.restore();
 
+      /* 受光侧轮廓光 */
       ctx.beginPath();
-      ctx.arc(x, y, r * 0.985, 0, TAU);
-      ctx.strokeStyle = `rgba(${p.glow}, ${0.45 * alpha})`;
-      ctx.lineWidth = 1.2;
+      ctx.arc(x, y, r * 0.975, sunAng - 1.2, sunAng + 1.2);
+      ctx.strokeStyle = `rgba(${p.glow}, ${0.6 * alpha})`;
+      ctx.lineWidth = Math.max(1, r * 0.07);
       ctx.stroke();
 
       if (p.ring) this.drawRing(ctx, x, y, r, alpha, true);
@@ -776,8 +917,8 @@
       else ctx.arc(0, 0, r * 1.72, Math.PI, TAU);
       const g = ctx.createLinearGradient(-r * 1.7, 0, r * 1.7, 0);
       g.addColorStop(0, `rgba(240, 205, 138, ${0.06 * alpha})`);
-      g.addColorStop(0.3, `rgba(248, 224, 176, ${0.55 * alpha})`);
-      g.addColorStop(0.7, `rgba(240, 205, 138, ${0.5 * alpha})`);
+      g.addColorStop(0.3, `rgba(248, 224, 176, ${0.6 * alpha})`);
+      g.addColorStop(0.7, `rgba(240, 205, 138, ${0.55 * alpha})`);
       g.addColorStop(1, `rgba(200, 160, 90, ${0.08 * alpha})`);
       ctx.strokeStyle = g;
       ctx.lineWidth = 2.4;
